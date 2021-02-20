@@ -159,7 +159,7 @@ def H(sigma: float, chi: float, N: int) -> float:
         float: brush's height
     """
     def fsol(z):  # normalization
-        # integrate _Z_2_inv for given sigma, chi, N from 0 to H
+        # integrate _Z_2_inv for a given sigma, chi, N from 0 to H
         return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z))[0] - N*sigma
     min_H = 0.0
     max_H = N
