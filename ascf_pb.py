@@ -5,7 +5,7 @@ from scipy import optimize
 
 
 """
-The script is created to calculated volume fraction 
+The script is created to calculate volume fraction 
 and osmotic pressure profiles of planar non-charged polymer brushes
 using analytic self-consistent field (ASCF) method.
 
@@ -15,7 +15,7 @@ N - polymer chain's length
 sigma - grafting density (chains per square)
 z - distance from the grafting surface
 
-The goal is funcstions that calculate volume fraction and osmotic pressure
+The goal is functions that calculate volume fraction and osmotic pressure
 with given parameters.
 
 @author: Mikhail Laktionov
