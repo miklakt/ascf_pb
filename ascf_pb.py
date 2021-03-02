@@ -167,7 +167,7 @@ def H(sigma: float, chi: float, N: int) -> float:
     return _H
 
 
-def phi(sigma: float, chi: float, N: int, z: float) -> float:
+def phi(sigma: float, chi: float, N: float):
     """Calculates polymer volume fraction in a polymer brush at a given distance
     from the grafting surface
 
@@ -177,14 +177,25 @@ def phi(sigma: float, chi: float, N: int, z: float) -> float:
         chi (float): Flory-Huggins parameter polymer-solvent
         z (float): distance from the grafting surface
     Returns:
-        float: volume fraction
+        function: volume fraction phi(z) function
     """
+
     _H = H(sigma, chi, N)
-    _phi = _Z_2_inv(z, chi, N, _H)
+    @np.vectorize
+    def _phi(z : float) -> float:
+        """volume fraction phi(z) function for given sigma, N, chi
+        function is compatible with numpy.array input
+
+        Args:
+            z (float): distance from the grafting surface
+        Returns:
+            float: volume fraction
+        """
+        return _Z_2_inv(z, chi, N, _H)
     return _phi
 
 
-def Pi(sigma: float, chi: float, N: int, z: float) -> float:
+def Pi(sigma: float, chi: float, N: float):
     """Calculates osmotic pressure in a polymer brush at a given distance
     from the grafting surface
 
@@ -194,10 +205,19 @@ def Pi(sigma: float, chi: float, N: int, z: float) -> float:
         chi (float): Flory-Huggins parameter polymer-solvent
         z (float): distance from the grafting surface
     Returns:
-        float: osmotic pressure
+        function: osmotic pressure Pi(z) function
     """
-    _phi = phi(sigma, chi, N, z)
-    _Pi = Pi_phi(_phi, chi)
+    _phi = phi(sigma, chi, N)
+    @np.vectorize
+    def _Pi(z : float) -> float:
+        """osmotic pressure Pi(z) function for given sigma, N, chi
+        function is compatible with numpy.array input
+        Args:
+            z (float): distance from the grafting surface
+        Returns:
+            float: osmotic pressure
+        """
+        return Pi_phi(_phi(z), chi)
     return _Pi
 
 
@@ -209,8 +229,8 @@ if __name__ == '__main__':
         _H = H(sigma, chi, N)
         print(f"\nH : {_H}")
         z = np.arange(0, np.ceil(_H))
-        _phi = [phi(sigma,chi,N,_z) for _z in z]
-        _Pi = [Pi(sigma,chi,N,_z) for _z in z]
+        _phi = phi(sigma,chi,N)(z)
+        _Pi = Pi(sigma,chi,N)(z)
         print("\nphi :")
         print(*_phi, sep = '\n')
         print("\nPi :")
