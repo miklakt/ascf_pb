@@ -1,4 +1,4 @@
 *.pdf
+*.ipynb
 __pycache__
 .vscode
-*.ipynb
