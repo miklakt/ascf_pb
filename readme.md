@@ -12,7 +12,7 @@ Within the strong stretching approximation there is a universal relation between
 
 There is also a normalization condition that says that integrating volume fraction over the brush thickness will give us amount of the polymer in the system.
 
-By using numerical root finding methods it is posible to obtain volume fraction profile.
+By using numerical root finding methods it is possible to obtain volume fraction profile.
 
 ## Usage
 
@@ -32,6 +32,7 @@ After the import you can get a function to evaluate volume fraction or osmotic p
 sigma, chi and N. For example:
 
 ```python
+import ascf_pb
 phi_func = ascf_pb.phi(sigma=0.05, chi=0.5, N=500)
 H = ascf_pb.H(sigma=0.05, chi=0.5, N=500)
 z = range(int(H))
