@@ -21,6 +21,7 @@ with given parameters.
 @author: Mikhail Laktionov
 miklakt@gmail.com
 """
+#__version__ = "0.2"
 
 
 def Pi_phi(phi: float, chi: float) -> float:
@@ -221,36 +222,3 @@ def Pi(sigma: float, chi: float, N: float):
     return _Pi
 
 
-
-
-#----shell-commands-------------------------------------------------------------
-if __name__ == '__main__':
-    def called_from_shell(sigma: float, chi: float, N: int):
-        _H = H(sigma, chi, N)
-        print(f"\nH : {_H}")
-        z = np.arange(0, np.ceil(_H))
-        _phi = phi(sigma,chi,N)(z)
-        _Pi = Pi(sigma,chi,N)(z)
-        print("\nphi :")
-        print(*_phi, sep = '\n')
-        print("\nPi :")
-        print(*_Pi, sep = '\n')
-
-    import argparse
-    parser = argparse.ArgumentParser(description="""
-    Planar polymer brush profiles calculation 
-    using Analytic Self-Consistent Field method
-    """
-                                     )
-    parser.add_argument('sigma', type = float,
-                        help = 'grafting density (chains per square)')
-    parser.add_argument('chi', type = float,
-                        help = 'Flory-Huggins parameter polymer-solvent')
-    parser.add_argument('N', type = int,
-                        help = "polymer chain's length")
-
-    args = vars(parser.parse_args())
-
-    called_from_shell(**args)
-else:
-    print(f'{__file__ } is loaded')
