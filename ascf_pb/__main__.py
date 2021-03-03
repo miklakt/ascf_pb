@@ -17,10 +17,13 @@ def main():
         z = np.arange(0, np.ceil(_H))
         _phi = ascf_pb.phi(sigma,chi,N)(z)
         _Pi = ascf_pb.Pi(sigma,chi,N)(z)
+        _mu = ascf_pb.mu(sigma,chi,N)(z)
         print("\nphi :")
         print(*_phi, sep = '\n')
         print("\nPi :")
         print(*_Pi, sep = '\n')
+        print("\nmu :")
+        print(*_mu, sep = '\n')
 
 
     parser = argparse.ArgumentParser(description="""
