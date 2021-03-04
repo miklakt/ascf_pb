@@ -6,7 +6,7 @@ HERE = pathlib.Path(__file__).parent
 
 setup(
     name='ascf_pb',
-    version='0.0.2',
+    version='0.0.3',
     description='Analytical Self-Consistent Field for planar Polymer Brush',
     author='Laktionov Mikhail',
     author_email = 'miklakt@gmail.com',
