@@ -1,20 +1,7 @@
 import numpy as np
 
-from .solver import phi, Pi_phi
+from .solver import phi, Pi_phi_chi, mu_phi_chi
 
-def mu_phi_chi(phi : float, chi : float) -> float:
-    """Chemical potential for a given volume fraction and solvent regime
-
-    Args:
-        phi (float): local polymer volume fraction
-        chi (float): Flory-Huggins parameter polymer-solvent
-
-    Returns:
-        float: chemical potential
-    """    
-
-    chem_pot = -np.log(1-phi)-2*chi*phi
-    return chem_pot
 
 def mu(sigma: float, chi: float, N: float):
     """Calculates chemical potential in a polymer brush at a given distance
@@ -62,5 +49,5 @@ def Pi(sigma: float, chi: float, N: float):
         Returns:
             float: osmotic pressure
         """
-        return Pi_phi(_phi(z), chi)
+        return Pi_phi_chi(_phi(z), chi)
     return _Pi

@@ -24,7 +24,7 @@ miklakt@gmail.com
 #__version__ = "0.2"
 
 
-def Pi_phi(phi: float, chi: float) -> float:
+def Pi_phi_chi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure
 
     Args:
@@ -36,6 +36,23 @@ def Pi_phi(phi: float, chi: float) -> float:
     """
     Pi = -np.log(1-phi)-chi*phi**2-phi
     return Pi
+
+def K(N : float) -> float:
+    k = 3/8 * np.pi**2/N**2
+    return k
+
+def mu_phi_chi(phi : float, chi : float) -> float:
+    """Chemical potential for a given volume fraction and solvent regime
+
+    Args:
+        phi (float): local polymer volume fraction
+        chi (float): Flory-Huggins parameter polymer-solvent
+
+    Returns:
+        float: chemical potential
+    """ 
+    mu = -np.log(1-phi)-2*chi*phi
+    return mu
 
 
 def phi_H(chi: float) -> float:
@@ -51,7 +68,7 @@ def phi_H(chi: float) -> float:
     else:  # poor solvent
         # to get phi_H we have to find where osmotic pressure vanishes
         def fsol(_phi):
-            return Pi_phi(_phi, chi)
+            return Pi_phi_chi(_phi, chi)
         # find the root with brentq method
         min_phi = 0.00001  # exclude 0 from the roots
         max_phi = 0.99999  # exclude 1 from the roots
@@ -70,9 +87,8 @@ def _LAMBDA_2(H_2: float, chi: float, N: int) -> float:
         [type]: [description]
     """
     _phi_H = phi_H(chi)
-    a = (3*np.pi**2)/(8*N**2)
-    c = -np.log(1-_phi_H)-2*chi*_phi_H
-    L_2 = H_2+c/a
+    _mu = mu_phi_chi(_phi_H, chi)
+    L_2 = H_2+_mu/K(N)
     return L_2
 
 
@@ -88,10 +104,10 @@ def _Z_2(phi: float, chi: float, N: int, H_2: float) -> float:
     Returns:
         (float): [description]
     """
-    a = (3*np.pi**2)/(8*N**2)
-    c = -np.log(1-phi)-2*chi*phi
+    _K = K(N)
+    _mu = mu_phi_chi(phi, chi)
     L_2 = _LAMBDA_2(H_2, chi, N)
-    z_2 = L_2-c/a
+    z_2 = L_2-_mu/_K
     return z_2
 
 
