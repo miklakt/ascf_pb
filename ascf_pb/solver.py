@@ -72,7 +72,10 @@ def phi_H(chi: float) -> float:
         # find the root with brentq method
         min_phi = 0.00001  # exclude 0 from the roots
         max_phi = 0.99999  # exclude 1 from the roots
-        phi_H = optimize.brentq(fsol, min_phi, max_phi)
+        try:
+            phi_H = optimize.brentq(fsol, min_phi, max_phi)
+        except:
+            print(f'optimize.brentq error in phi_H(chi = {chi})')
     return phi_H
 
 
@@ -128,14 +131,19 @@ def _PHI_0(chi: float, N: int, H_2: float) -> float:
 
     # the minimum value is at the brush's end
     min_phi = phi_H(chi)
-    phi = optimize.brentq(fsol, min_phi, 0.99999)
+    try:
+        phi = optimize.brentq(fsol, min_phi, 0.99999)
+    except:
+        print(
+            f'optimize.brentq error in _PHI_(chi = {chi}, N = {N}, H_2={H_2})'
+            )
     return phi
 
 
 def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
     """Express phi from strong-stretching SCF approximation by inverting _Z_2
     Args:
-        z_2 (float): distance from grafting surface squared
+        z (float): distance from grafting surface
         chi (float): Flory-Huggins parameter polymer-solvent
         N (float): polymer chain's length
         H_2 (float): brush's height squared
@@ -158,7 +166,12 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
 
         max_phi = _PHI_0(chi, N, H_2)
         min_phi = phi_H(chi)
-        phi = optimize.brentq(fsol, min_phi, max_phi)
+        try:
+            phi = optimize.brentq(fsol, min_phi, max_phi)
+        except:
+            print(
+                f'optimize.brentq error in _Z_2_inv(z = {z}, chi = {chi}, N = {N}, H={H})'
+            )
     return phi
 
 
@@ -180,7 +193,12 @@ def H(sigma: float, chi: float, N: int) -> float:
         return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z))[0] - N*sigma
     min_H = 0.0
     max_H = N
-    _H = optimize.brentq(fsol, min_H, max_H)
+    try:
+        _H = optimize.brentq(fsol, min_H, max_H)
+    except:
+        print(
+                f'optimize.brentq error in H(sigam = {sigma}, chi = {chi}, N = {N})'
+            )
     return _H
 
 
