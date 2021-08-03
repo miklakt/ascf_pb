@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Callable
 import numpy as np
 import scipy.integrate as integrate
 from scipy import optimize
@@ -8,16 +9,13 @@ from scipy import optimize
 The script is created to calculate volume fraction 
 and osmotic pressure profiles of planar non-charged polymer brushes
 using analytic self-consistent field (ASCF) method.
-
 The parameters that describe the brush are the next ones:
 chi -  Flory-Huggins parameter polymer-solvent
 N - polymer chain's length
 sigma - grafting density (chains per square)
 z - distance from the grafting surface
-
 The goal is functions that calculate volume fraction and osmotic pressure
 with given parameters.
-
 @author: Mikhail Laktionov
 miklakt@gmail.com
 """
@@ -26,28 +24,24 @@ miklakt@gmail.com
 
 def Pi_phi_chi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure
-
     Args:
         phi (float): local polymer volume fraction
         chi (float): Flory-Huggins parameter polymer-solvent
-
     Returns:
         float: osmotic pressure
     """
     Pi = -np.log(1-phi)-chi*phi**2-phi
     return Pi
 
-def K(N : float) -> float:
+def kappa_plain(N : float) -> float:
     k = 3/8 * np.pi**2/N**2
     return k
 
 def mu_phi_chi(phi : float, chi : float) -> float:
     """Chemical potential for a given volume fraction and solvent regime
-
     Args:
         phi (float): local polymer volume fraction
         chi (float): Flory-Huggins parameter polymer-solvent
-
     Returns:
         float: chemical potential
     """ 
@@ -59,7 +53,6 @@ def phi_H(chi: float) -> float:
     """Calculates polymer volume fraction at the end of the brush
     Args:
         chi (float): Flory-Huggins parameter polymer-solvent
-
     Returns:
         float: volume fraction
     """
@@ -74,14 +67,14 @@ def phi_H(chi: float) -> float:
         max_phi = 0.99999  # exclude 1 from the roots
         try:
             phi_H = optimize.brentq(fsol, min_phi, max_phi)
-        except:
+        except Exception as e:
             print(f'optimize.brentq error in phi_H(chi = {chi})')
+            raise e
     return phi_H
 
 
-def _LAMBDA_2(H_2: float, chi: float, N: int) -> float:
+def _LAMBDA_2(H_2: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain) -> float:
     """Calculates lambda_squared
-
     Args:
         H_2 (float): brush's height squared
         chi (float): Flory-Huggins parameter polymer-solvent
@@ -95,15 +88,13 @@ def _LAMBDA_2(H_2: float, chi: float, N: int) -> float:
     return L_2
 
 
-def _Z_2(phi: float, chi: float, N: int, H_2: float) -> float:
+def _Z_2(phi: float, chi: float, N: int, H_2: float, K : Callable[[float], float] = kappa_plain) -> float:
     """Express z squared from strong-stretching SCF approximation
-
     Args:
         phi (float): local polymer volume fraction
         chi (float): Flory-Huggins parameter polymer-solvent
         N (int): polymer chain's length
         H_2 (float): brush's height squared
-
     Returns:
         (float): [description]
     """
@@ -117,12 +108,10 @@ def _Z_2(phi: float, chi: float, N: int, H_2: float) -> float:
 @lru_cache()
 def _PHI_0(chi: float, N: int, H_2: float) -> float:
     """Calculates polymer volume fraction at the grafting surface
-
     Args:
         chi (float): Flory-Huggins parameter polymer-solvent
         N (int): polymer chain's length
         H_2 (float): brush's height squared
-
     Returns:
         float: distance from grafting surface squared
     """
@@ -133,10 +122,11 @@ def _PHI_0(chi: float, N: int, H_2: float) -> float:
     min_phi = phi_H(chi)
     try:
         phi = optimize.brentq(fsol, min_phi, 0.99999)
-    except:
+    except Exception as e:
         print(
-            f'optimize.brentq error in _PHI_(chi = {chi}, N = {N}, H_2={H_2})'
+            f'optimize.brentq error in _PHI_0(chi = {chi}, N = {N}, H_2={H_2})'
             )
+        raise e
     return phi
 
 
@@ -147,7 +137,6 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
         chi (float): Flory-Huggins parameter polymer-solvent
         N (float): polymer chain's length
         H_2 (float): brush's height squared
-
     Returns:
         float: local polymer volume fraction
     """
@@ -168,10 +157,11 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
         min_phi = phi_H(chi)
         try:
             phi = optimize.brentq(fsol, min_phi, max_phi)
-        except:
+        except Exception as e:
             print(
                 f'optimize.brentq error in _Z_2_inv(z = {z}, chi = {chi}, N = {N}, H={H})'
             )
+            raise e
     return phi
 
 
@@ -179,12 +169,10 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
 def H(sigma: float, chi: float, N: int) -> float:
     """Calculates brush's height (thickness) 
     by fullfiling normalization condition
-
     Args:
         sigma (float): grafting density (chains per square)
         chi (float): Flory-Huggins parameter polymer-solvent
         N (int): polymer chain's length
-
     Returns:
         float: brush's height
     """
@@ -195,17 +183,17 @@ def H(sigma: float, chi: float, N: int) -> float:
     max_H = N
     try:
         _H = optimize.brentq(fsol, min_H, max_H)
-    except:
+    except Exception as e:
         print(
                 f'optimize.brentq error in H(sigam = {sigma}, chi = {chi}, N = {N})'
             )
+        raise e
     return _H
 
 
 def phi(sigma: float, chi: float, N: float):
     """Calculates polymer volume fraction in a polymer brush at a given distance
     from the grafting surface
-
     Args:
         sigma (float): grafting density (chains per square)
         N (int): polymer chain's length
@@ -220,7 +208,6 @@ def phi(sigma: float, chi: float, N: float):
     def _phi(z : float) -> float:
         """volume fraction phi(z) function for given sigma, N, chi
         function is compatible with numpy.array input
-
         Args:
             z (float): distance from the grafting surface
         Returns:
@@ -228,5 +215,3 @@ def phi(sigma: float, chi: float, N: float):
         """
         return _Z_2_inv(z, chi, N, _H)
     return _phi
-
-
