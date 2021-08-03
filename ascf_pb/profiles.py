@@ -1,9 +1,11 @@
 import numpy as np
+from typing import Callable
 
 from .solver import phi, Pi_phi_chi, mu_phi_chi
+from .topology import kappa_plain
 
 
-def mu(sigma: float, chi: float, N: float):
+def mu(sigma: float, chi: float, N: float, K : Callable[[float], float] = kappa_plain):
     """Calculates chemical potential in a polymer brush at a given distance
     from the grafting surface
 
@@ -15,7 +17,7 @@ def mu(sigma: float, chi: float, N: float):
     Returns:
         function: chemical potential mu(z) function
     """
-    _phi = phi(sigma, chi, N)
+    _phi = phi(sigma, chi, N, K)
     @np.vectorize
     def _mu(z : float) -> float:
         """chemical potential mu(z) function compatible with numpy.array input
@@ -27,7 +29,7 @@ def mu(sigma: float, chi: float, N: float):
         return mu_phi_chi(_phi(z), chi)
     return _mu
 
-def Pi(sigma: float, chi: float, N: float):
+def Pi(sigma: float, chi: float, N: float, K : Callable[[float], float] = kappa_plain):
     """Calculates osmotic pressure in a polymer brush at a given distance
     from the grafting surface
 
@@ -39,7 +41,7 @@ def Pi(sigma: float, chi: float, N: float):
     Returns:
         function: osmotic pressure Pi(z) function
     """
-    _phi = phi(sigma, chi, N)
+    _phi = phi(sigma, chi, N, K)
     @np.vectorize
     def _Pi(z : float) -> float:
         """osmotic pressure Pi(z) function for given sigma, N, chi

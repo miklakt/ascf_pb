@@ -1,10 +1,11 @@
+import ascf_pb
 from functools import lru_cache
 from typing import Callable
 import numpy as np
 import scipy.integrate as integrate
 from scipy import optimize
 
-from topology import kappa_plain
+from .topology import kappa_plain
 
 """
 The script is created to calculate volume fraction 
@@ -22,7 +23,6 @@ miklakt@gmail.com
 """
 #__version__ = "0.2"
 
-
 def Pi_phi_chi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure
     Args:
@@ -33,10 +33,6 @@ def Pi_phi_chi(phi: float, chi: float) -> float:
     """
     Pi = -np.log(1-phi)-chi*phi**2-phi
     return Pi
-
-def kappa_plain(N : float) -> float:
-    k = 3/8 * np.pi**2/N**2
-    return k
 
 def mu_phi_chi(phi : float, chi : float) -> float:
     """Chemical potential for a given volume fraction and solvent regime
@@ -166,7 +162,7 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float, K : Callable[[float], flo
 
 
 @lru_cache()
-def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain) -> float:
+def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain, max_H = None) -> float:
     """Calculates brush's height (thickness) 
     by fullfiling normalization condition
     Args:
@@ -180,14 +176,27 @@ def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_pla
         # integrate _Z_2_inv for a given sigma, chi, N from 0 to H
         return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z, K))[0] - N*sigma
     min_H = 0.0
-    max_H = N
-    try:
-        _H = optimize.brentq(fsol, min_H, max_H)
-    except Exception as e:
-        print(
-                f'optimize.brentq error in H(sigam = {sigma}, chi = {chi}, N = {N})'
-            )
-        raise e
+    if K == kappa_plain:
+        max_H = N
+    else:
+        print("Non-plane topology notified")
+        if max_H is None:
+            print("No max_H provided")
+            max_H = H(sigma, chi, N)
+            print(f"max_H : {max_H}")
+    max_tries = 10
+    tries = 0
+    dH=max_H/(max_tries+1)
+    while tries < max_tries:
+        try:
+            _H = optimize.brentq(fsol, min_H, max_H)
+            break
+        except ValueError:
+            print(f'trying to decrease upper boundary max_H')
+            max_H = max_H-dH
+            tries = tries + 1
+    else:
+        raise
     return _H
 
 

@@ -12,12 +12,13 @@ def test():
 def main():
     
     def called_from_shell(sigma: float, chi: float, N: int):
-        _H = ascf_pb.H(sigma, chi, N)
+        kappa = ascf_pb.topology.kappa_plain
+        _H = ascf_pb.H(sigma, chi, N, kappa)
         print(f"\nH : {_H}")
         z = np.arange(0, np.ceil(_H))
-        _phi = ascf_pb.phi(sigma,chi,N)(z)
-        _Pi = ascf_pb.Pi(sigma,chi,N)(z)
-        _mu = ascf_pb.mu(sigma,chi,N)(z)
+        _phi = ascf_pb.phi(sigma,chi,N, kappa)(z)
+        _Pi = ascf_pb.Pi(sigma,chi,N, kappa)(z)
+        _mu = ascf_pb.mu(sigma,chi,N, kappa)(z)
         print("\nphi :")
         print(*_phi, sep = '\n')
         print("\nPi :")
@@ -43,4 +44,4 @@ def main():
     called_from_shell(**args)
 
 if __name__ == "__main__":
-    test()
+    main()
