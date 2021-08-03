@@ -4,6 +4,7 @@ import numpy as np
 import scipy.integrate as integrate
 from scipy import optimize
 
+from topology import kappa_plain
 
 """
 The script is created to calculate volume fraction 
@@ -73,7 +74,7 @@ def phi_H(chi: float) -> float:
     return phi_H
 
 
-def _LAMBDA_2(H_2: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain) -> float:
+def _LAMBDA_2(H_2: float, chi: float, N: int, K : Callable[[float], float]) -> float:
     """Calculates lambda_squared
     Args:
         H_2 (float): brush's height squared
@@ -88,7 +89,7 @@ def _LAMBDA_2(H_2: float, chi: float, N: int, K : Callable[[float], float] = kap
     return L_2
 
 
-def _Z_2(phi: float, chi: float, N: int, H_2: float, K : Callable[[float], float] = kappa_plain) -> float:
+def _Z_2(phi: float, chi: float, N: int, H_2: float, K : Callable[[float], float]) -> float:
     """Express z squared from strong-stretching SCF approximation
     Args:
         phi (float): local polymer volume fraction
@@ -98,15 +99,14 @@ def _Z_2(phi: float, chi: float, N: int, H_2: float, K : Callable[[float], float
     Returns:
         (float): [description]
     """
-    _K = K(N)
     _mu = mu_phi_chi(phi, chi)
-    L_2 = _LAMBDA_2(H_2, chi, N)
-    z_2 = L_2-_mu/_K
+    L_2 = _LAMBDA_2(H_2, chi, N, K)
+    z_2 = L_2-_mu/K(N)
     return z_2
 
 
 @lru_cache()
-def _PHI_0(chi: float, N: int, H_2: float) -> float:
+def _PHI_0(chi: float, N: int, H_2: float, K : Callable[[float], float]) -> float:
     """Calculates polymer volume fraction at the grafting surface
     Args:
         chi (float): Flory-Huggins parameter polymer-solvent
@@ -116,7 +116,7 @@ def _PHI_0(chi: float, N: int, H_2: float) -> float:
         float: distance from grafting surface squared
     """
     def fsol(_phi):
-        return _Z_2(_phi, chi, N, H_2)
+        return _Z_2(_phi, chi, N, H_2, K)
 
     # the minimum value is at the brush's end
     min_phi = phi_H(chi)
@@ -130,7 +130,7 @@ def _PHI_0(chi: float, N: int, H_2: float) -> float:
     return phi
 
 
-def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
+def _Z_2_inv(z: float, chi: float, N: float, H: float, K : Callable[[float], float]) -> float:
     """Express phi from strong-stretching SCF approximation by inverting _Z_2
     Args:
         z (float): distance from grafting surface
@@ -145,15 +145,15 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
     if z_2 > H_2:  # outside the brush
         phi = 0
     elif z_2 == 0:  # at the grafting surface
-        phi = _PHI_0(chi, N, H_2)
+        phi = _PHI_0(chi, N, H_2, K)
     elif z_2 == H_2:  # at the brush's end
         phi = phi_H(chi)
     else:  # inside the brush
         # we can find correct phi by finding the root of fsol(_phi)
         def fsol(_phi):
-            return _Z_2(_phi, chi, N, H_2)-z_2
+            return _Z_2(_phi, chi, N, H_2, K)-z_2
 
-        max_phi = _PHI_0(chi, N, H_2)
+        max_phi = _PHI_0(chi, N, H_2, K)
         min_phi = phi_H(chi)
         try:
             phi = optimize.brentq(fsol, min_phi, max_phi)
@@ -166,7 +166,7 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float) -> float:
 
 
 @lru_cache()
-def H(sigma: float, chi: float, N: int) -> float:
+def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain) -> float:
     """Calculates brush's height (thickness) 
     by fullfiling normalization condition
     Args:
@@ -178,7 +178,7 @@ def H(sigma: float, chi: float, N: int) -> float:
     """
     def fsol(z):  # normalization
         # integrate _Z_2_inv for a given sigma, chi, N from 0 to H
-        return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z))[0] - N*sigma
+        return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z, K))[0] - N*sigma
     min_H = 0.0
     max_H = N
     try:
@@ -191,7 +191,7 @@ def H(sigma: float, chi: float, N: int) -> float:
     return _H
 
 
-def phi(sigma: float, chi: float, N: float):
+def phi(sigma: float, chi: float, N: float, K : Callable[[float], float] = kappa_plain):
     """Calculates polymer volume fraction in a polymer brush at a given distance
     from the grafting surface
     Args:
@@ -203,7 +203,7 @@ def phi(sigma: float, chi: float, N: float):
         function: volume fraction phi(z) function
     """
 
-    _H = H(sigma, chi, N)
+    _H = H(sigma, chi, N, K)
     @np.vectorize
     def _phi(z : float) -> float:
         """volume fraction phi(z) function for given sigma, N, chi
@@ -213,5 +213,5 @@ def phi(sigma: float, chi: float, N: float):
         Returns:
             float: volume fraction
         """
-        return _Z_2_inv(z, chi, N, _H)
+        return _Z_2_inv(z, chi, N, _H, K)
     return _phi

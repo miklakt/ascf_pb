@@ -43,4 +43,4 @@ def main():
     called_from_shell(**args)
 
 if __name__ == "__main__":
-    main()
+    test()
