@@ -21,7 +21,6 @@ with given parameters.
 @author: Mikhail Laktionov
 miklakt@gmail.com
 """
-#__version__ = "0.2"
 
 def Pi_phi_chi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure
@@ -65,7 +64,7 @@ def phi_H(chi: float) -> float:
         try:
             phi_H = optimize.brentq(fsol, min_phi, max_phi)
         except Exception as e:
-            print(f'optimize.brentq error in phi_H(chi = {chi})')
+            #print(f'optimize.brentq error in phi_H(chi = {chi})')
             raise e
     return phi_H
 
@@ -81,7 +80,7 @@ def _LAMBDA_2(H_2: float, chi: float, N: int, K : Callable[[float], float]) -> f
     """
     _phi_H = phi_H(chi)
     _mu = mu_phi_chi(_phi_H, chi)
-    L_2 = H_2+_mu/K(N)
+    L_2 = H_2+ (2/3)*(1/K(N))**2 * _mu
     return L_2
 
 
@@ -97,7 +96,7 @@ def _Z_2(phi: float, chi: float, N: int, H_2: float, K : Callable[[float], float
     """
     _mu = mu_phi_chi(phi, chi)
     L_2 = _LAMBDA_2(H_2, chi, N, K)
-    z_2 = L_2-_mu/K(N)
+    z_2 = L_2-(2/3)*(1/K(N))**2 * _mu
     return z_2
 
 
@@ -119,9 +118,9 @@ def _PHI_0(chi: float, N: int, H_2: float, K : Callable[[float], float]) -> floa
     try:
         phi = optimize.brentq(fsol, min_phi, 0.99999)
     except Exception as e:
-        print(
-            f'optimize.brentq error in _PHI_0(chi = {chi}, N = {N}, H_2={H_2})'
-            )
+        #print(
+        #    f'optimize.brentq error in _PHI_0(chi = {chi}, N = {N}, H_2={H_2})'
+        #    )
         raise e
     return phi
 
@@ -154,15 +153,15 @@ def _Z_2_inv(z: float, chi: float, N: float, H: float, K : Callable[[float], flo
         try:
             phi = optimize.brentq(fsol, min_phi, max_phi)
         except Exception as e:
-            print(
-                f'optimize.brentq error in _Z_2_inv(z = {z}, chi = {chi}, N = {N}, H={H})'
-            )
+            #print(
+            #    f'optimize.brentq error in _Z_2_inv(z = {z}, chi = {chi}, N = {N}, H={H})'
+            #)
             raise e
     return phi
 
 
 @lru_cache()
-def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain, max_H = None) -> float:
+def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_plain, max_H : float = None) -> float:
     """Calculates brush's height (thickness) 
     by fullfiling normalization condition
     Args:
@@ -176,27 +175,24 @@ def H(sigma: float, chi: float, N: int, K : Callable[[float], float] = kappa_pla
         # integrate _Z_2_inv for a given sigma, chi, N from 0 to H
         return integrate.quad(_Z_2_inv, 0, z, args=(chi, N, z, K))[0] - N*sigma
     min_H = 0.0
-    if K == kappa_plain:
-        max_H = N
-    else:
-        print("Non-plane topology notified")
-        if max_H is None:
-            print("No max_H provided")
-            max_H = H(sigma, chi, N)
-            print(f"max_H : {max_H}")
-    max_tries = 10
+    #print("No max_H provided")
+    max_H = N
+    #print(f"max_H : {max_H}")
+    max_tries = 20
     tries = 0
     dH=max_H/(max_tries+1)
     while tries < max_tries:
         try:
             _H = optimize.brentq(fsol, min_H, max_H)
             break
-        except ValueError:
-            print(f'trying to decrease upper boundary max_H')
+        except ValueError as e:
+            #print(e)
+            #print(f'trying to decrease upper boundary max_H')
             max_H = max_H-dH
+            #print(f"max_H : {max_H}")
             tries = tries + 1
     else:
-        raise
+        raise ValueError()
     return _H
 
 
