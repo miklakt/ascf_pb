@@ -8,3 +8,8 @@ def build_phi_profile_solver(kappa_cb, D_cb, phi_D_cb, **kwargs):
         return Phi(z, chi, kappa, D, phi_D)
     return phi
 
+def build_Pi_profile_solver(*args, **kwargs):
+    phi = build_phi_profile_solver(*args, **kwargs)
+    chi = kwargs['chi']
+    _Pi = Pi(phi, chi)
+
