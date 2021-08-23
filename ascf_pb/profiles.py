@@ -1,4 +1,4 @@
-from solver import Pi, Phi
+from .solver import Pi, Phi
 def build_phi_profile_solver(kappa_cb, D_cb, phi_D_cb, **kwargs):
     kappa = kappa_cb(**kwargs)
     D = D_cb(kappa = kappa,**kwargs)
@@ -11,5 +11,7 @@ def build_phi_profile_solver(kappa_cb, D_cb, phi_D_cb, **kwargs):
 def build_Pi_profile_solver(*args, **kwargs):
     phi = build_phi_profile_solver(*args, **kwargs)
     chi = kwargs['chi']
-    _Pi = Pi(phi, chi)
+    def _Pi(z : float):
+        return phi(z)
+    return _Pi
 

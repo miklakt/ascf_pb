@@ -1,7 +1,8 @@
-from solver import Pi, Phi
+from ascf_pb.solver import Pi, Phi
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
+
 
 def phi_D_unrestricted(chi: float, **_) -> float:
     """Calculates polymer volume fraction at the end of the brush`
@@ -24,6 +25,7 @@ def phi_D_unrestricted(chi: float, **_) -> float:
         except Exception as e:
             raise e
     return phi_D
+
 
 def normalization_unrestricted(chi : float, kappa : float, theta : float):
     phi_D  = phi_D_unrestricted(chi)
@@ -57,3 +59,24 @@ def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
     else:
         raise ValueError()
     return _D
+
+################################################################################
+def normalization_restricted(
+    chi : float, kappa : float, theta : float, R : float
+    ):
+
+    def integrand(z, phi_R):
+        return Phi(z = z, d=R,
+        chi = chi, kappa=kappa, phi_D=phi_R)
+    def integral(phi_R):
+        return integrate.quad(integrand, 0, R, args = (phi_R,))[0] - theta
+    return integral
+
+
+def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
+    phi_R_min = phi_D_unrestricted(chi)
+    phi_R_max = 0.99 #can be evaluated with a separate routine
+    theta = sigma*N
+    norm = normalization_restricted(chi, kappa, theta, R)
+    phi_R = brentq(norm, phi_R_min, phi_R_max)
+    return phi_R

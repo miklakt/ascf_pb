@@ -59,7 +59,7 @@ def Z(phi : float,  d : float, z : float,  kappa : float, chi : float, phi_D : f
     Returns:
         float: returns zero if arguments are consistent        
     """    
-    return d**2 - z**2 - (2/3)/kappa**2*(mu(phi_D,chi) + mu(phi,chi))
+    return d**2 - z**2 + (2/3)/kappa**2*(mu(phi_D,chi) - mu(phi,chi))
 
 @lru_cache()
 def Phi_0(chi : float, kappa : float, d : float, phi_D : float):
@@ -107,56 +107,3 @@ def Phi(z : float, chi : float, kappa : float, d : float, phi_D : float):
             chi = chi, phi_D = phi_D
         )
     return brentq(fsol, a, b)
-
-def phi_D_unrestricted(chi: float) -> float:
-    """Calculates polymer volume fraction at the end of the brush`
-    Args:
-        chi (float): Flory-Huggins parameter polymer-solvent
-    Returns:
-        float: volume fraction
-    """
-    if chi <= 0.5:  # good solvent
-        phi_D = 0
-    else:  # poor solvent
-        # to get phi_H we have to find where osmotic pressure vanishes
-        def fsol(_phi):
-            return Pi(_phi, chi)
-        # find the root with brentq method
-        min_phi = 0.00001  # exclude 0 from the roots
-        max_phi = 0.99999  # exclude 1 from the roots
-        try:
-            phi_D = brentq(fsol, min_phi, max_phi)
-        except Exception as e:
-            raise e
-    return phi_D
-
-def normalization_plain_unrestricted(chi : float, kappa : float, theta : float):
-
-    phi_D  = phi_D_unrestricted(chi)
-    def integrand(z, d):
-        return Phi(z = z, d=d,
-        chi = chi, kappa=kappa, phi_D=phi_D)
-    def integral(d):
-        return integrate.quad(integrand, 0, d, args=(d,))[0] - theta
-    return integral
-
-def D_unrestricted(chi : float, kappa : float, theta : float, max_D_guess : float):
-    normalization = normalization_plain_unrestricted(chi,kappa,theta)
-    min_D = 0
-    max_tries = 20
-    tries = 0
-    dD=max_D_guess/(max_tries+1)
-    while tries < max_tries:
-        try:
-
-            _D = brentq(normalization, min_D, max_D_guess)
-            break
-        except ValueError as e:
-            #print(e)
-            #print(f'trying to decrease upper boundary max_H_guess')
-            max_D_guess = max_D_guess-dD
-            #print(f"max_H_guess : {max_H_guess}")
-            tries = tries + 1
-    else:
-        raise ValueError()
-    return _D
