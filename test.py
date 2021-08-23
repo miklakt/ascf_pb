@@ -31,3 +31,14 @@ z = np.arange(round(R+1.5))
 phi_ = [phi(z_) for z_ in z]
 plt.plot(z, phi_)
 plt.show()
+#%%
+from ascf_pb.profiles import build_phi_profile_solver
+def restriction(R, **_):
+    return R
+phi_profile = build_phi_profile_solver(
+    kappa_plain, restriction, phi_D_restricted,
+    chi = chi, N=N, sigma = sigma, R = 180)
+# %%
+phi = [phi_profile(z) for z  in range(200)]
+# %%
+plt.plot(phi)
