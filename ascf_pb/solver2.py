@@ -1,13 +1,8 @@
-#%%
-from functools import lru_cache
+from functools import lru_cache, partial
 from typing import Callable, Tuple
 import numpy as np
-import scipy
 import scipy.integrate as integrate
 from scipy import optimize
-
-#from .topology import kappa_plain
-
 """
 The script is created to calculate volume fraction 
 and osmotic pressure profiles of non-charged polymer brushes
@@ -23,6 +18,7 @@ with given parameters.
 miklakt@gmail.com
 """
 
+@lru_cache()
 def Pi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure for a given local polymer volume fraction
     Args:
@@ -34,6 +30,7 @@ def Pi(phi: float, chi: float) -> float:
     Pi = -np.log(1-phi)-chi*phi**2-phi
     return Pi
 
+@lru_cache()
 def mu(phi : float, chi : float) -> float:
     """Chemical potential for a given volume fraction and solvent regime
     Args:
@@ -47,9 +44,35 @@ def mu(phi : float, chi : float) -> float:
 
 
 def Z(phi : float,  d : float, z : float,  kappa : float, chi : float, phi_D : float):
+    """An auxiliary function to calculate a polymer brush density profile.
+    Profiles are founded by root finding of this function with all the arguments
+    fixed, but phi
+
+    Args:
+        phi (float): polymer brush density
+        d (float): polymer brush height
+        z (float): distance from grafting surface
+        kappa (float): topological parameter
+        chi (float): Flory-Huggins parameter for the solvent-polymer interaction 
+        phi_D (float): polymer density at the brush's end
+
+    Returns:
+        float: returns zero if arguments are consistent        
+    """    
     return d**2 - z**2 - (2/3)/kappa**2*(mu(phi_D,chi) + mu(phi,chi))
 
-def phi_0(chi : float, kappa : float, d : float, phi_D : float):
+@lru_cache()
+def Phi_0(chi : float, kappa : float, d : float, phi_D : float):
+    """Calculates polymer density at the grafting surface
+
+    Args:
+        chi (float): Flory-Huggins parameter for the solvent-polymer interaction
+        kappa (float): topological parameter
+        d (float): polymer brush height
+        phi_D (float): polymer density at the brush's end
+    Returns:
+        float: polymer density at the grafting surface
+    """    
     def fsol(phi_ : float):
         return Z(
             phi = phi_, z = 0,
@@ -58,9 +81,22 @@ def phi_0(chi : float, kappa : float, d : float, phi_D : float):
         )
     return optimize.brentq(fsol, 0.99999, phi_D)
 
-def F(z : float, chi : float, kappa : float, d : float, phi_D : float):
+@lru_cache()
+def Phi(z : float, chi : float, kappa : float, d : float, phi_D : float):
+    """Calculates polymer density at a given distance from the grafting surface
+
+    Args:
+        z (float): distance from grafting surface
+        chi (float): Flory-Huggins parameter for the solvent-polymer interaction
+        kappa (float): topological parameter
+        d (float): polymer brush height
+        phi_D (float): polymer density at the brush's end
+
+    Returns:
+        float: polymer density
+    """    
     if z>d: return 0
-    a = phi_0(chi, kappa, d, phi_D)
+    a = Phi_0(chi, kappa, d, phi_D)
     if z==0: return a
     b = phi_D
     if z==phi_D: return b
@@ -98,7 +134,7 @@ def phi_D_unrestricted(chi: float) -> float:
 def normalization_plain_unrestricted(chi : float, kappa : float, theta : float):
     phi_D  = phi_D_unrestricted(chi)
     def integrand(z, d):
-        return F(z = z, d=d,
+        return Phi(z = z, d=d,
         chi = chi, kappa=kappa, phi_D=phi_D)
     def integral(d):
         return integrate.quad(integrand, 0, d, args=(d,))[0] - theta
@@ -124,41 +160,3 @@ def D_unrestricted(chi : float, kappa : float, theta : float, max_D_guess : floa
     else:
         raise ValueError()
     return _D
-
-
-#%%
-N =1000
-chi =0
-sigma = 0.02
-theta = N*sigma
-kappa = np.pi/(2*N)
-#%%
-D_unrestricted(chi,kappa,theta, N)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# %%
-F(100, 0.5, np.pi/(2*1000), 100,0)
-# %%
-normalization(0.5, np.pi/(2*1000), 0, 1000*0.02)(100.4)
-# %%
-F(101, 0, np.pi/(2*1000), 100, 0)
-
-# %%
