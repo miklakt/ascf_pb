@@ -18,8 +18,8 @@ def get_n(N : float, g : int, q : int):
     n=N/n_branches
     return n
 
-def kappa_regular_dendron(g : int, q : int, **_):
-    def kappa(N):
+def kappa_regular_dendron(g : int, q : int):
+    def kappa(N, **_):
         n = get_n(N, g, q)
         return kappa_regular_dendron_gnq(g, n, q)
     return kappa
