@@ -80,3 +80,22 @@ def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : f
     norm = normalization_restricted(chi, kappa, theta, R)
     phi_R = brentq(norm, phi_R_min, phi_R_max)
     return phi_R
+
+
+################################################################################
+def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
+    D = D_unrestricted(chi, kappa, N, sigma)
+    if R>=D or R<=0:
+        #brush is not restricted
+        phi_D = phi_D_unrestricted(chi)
+    else:
+        #brush is restricted
+        phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
+    return phi_D
+
+def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
+    D = D_unrestricted(chi, kappa, N, sigma)
+    if D<=R: 
+        return D
+    else:
+        return R
