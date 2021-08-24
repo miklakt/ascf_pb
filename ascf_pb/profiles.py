@@ -6,7 +6,7 @@ def build_phi_profile_solver(kappa_cb, D_cb, phi_D_cb, **kwargs):
     chi = kwargs['chi']
     def phi(z : float):
         return Phi(z, chi, kappa, D, phi_D)
-    return phi
+    return phi, D
 
 def build_Pi_profile_solver(*args, **kwargs):
     phi = build_phi_profile_solver(*args, **kwargs)

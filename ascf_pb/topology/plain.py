@@ -4,6 +4,24 @@ from scipy import integrate
 import numpy as np
 
 
+def normalization_find_root(normalization, a, b, max_tries=20):
+    tries = 0
+    d=b/(max_tries+1)
+    while tries < max_tries:
+        try:
+            root = brentq(normalization, a, b)
+            break
+        except ValueError as e:
+            #print(e)
+            #print(f'trying to decrease upper boundary max_H_guess')
+            b = b-d
+            #print(f"max_H_guess : {max_H_guess}")
+            tries = tries + 1
+    else:
+        raise ValueError("f(a) and f(b) still have the same signs")
+    return root
+
+
 def phi_D_unrestricted(chi: float, **_) -> float:
     """Calculates polymer volume fraction at the end of the brush`
     Args:
@@ -42,23 +60,25 @@ def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
     normalization = normalization_unrestricted(chi,kappa,theta)
     min_D = 0
     max_D = N
-    max_tries = 20
-    tries = 0
-    dD=max_D/(max_tries+1)
-    while tries < max_tries:
-        try:
+    _D = normalization_find_root(normalization, min_D, max_D)
+    #max_tries = 20
+    #tries = 0
+    #dD=max_D/(max_tries+1)
+    #while tries < max_tries:
+    #    try:
 
-            _D = brentq(normalization, min_D, max_D)
-            break
-        except ValueError as e:
-            #print(e)
-            #print(f'trying to decrease upper boundary max_H_guess')
-            max_D = max_D-dD
-            #print(f"max_H_guess : {max_H_guess}")
-            tries = tries + 1
-    else:
-        raise ValueError()
+    #        _D = brentq(normalization, min_D, max_D)
+    #        break
+    #    except ValueError as e:
+    #        #print(e)
+    #        #print(f'trying to decrease upper boundary max_H_guess')
+    #        max_D = max_D-dD
+    #        #print(f"max_H_guess : {max_H_guess}")
+    #        tries = tries + 1
+    #else:
+    #    raise ValueError()
     return _D
+
 
 ################################################################################
 def normalization_restricted(
@@ -92,6 +112,7 @@ def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : fl
         #brush is restricted
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
     return phi_D
+
 
 def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
     D = D_unrestricted(chi, kappa, N, sigma)

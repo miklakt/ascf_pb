@@ -3,6 +3,24 @@ from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
 
+def normalization_find_root(normalization, a, b, max_tries=20):
+    tries = 0
+    d=b/(max_tries+1)
+    while tries < max_tries:
+        try:
+            root = brentq(normalization, a, b)
+            break
+        except ValueError as e:
+            #print(e)
+            #print(f'trying to decrease upper boundary max_H_guess')
+            b = b-d
+            #print(f"max_H_guess : {max_H_guess}")
+            tries = tries + 1
+    else:
+        raise ValueError("f(a) and f(b) still have the same signs")
+    return root
+
+
 def phi_D_unrestricted(chi: float, **_) -> float:
     """Calculates polymer volume fraction at the end of the brush`
     Args:
@@ -36,27 +54,17 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float, pore_R
     return integral
 
 
-def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, pore_Radius : float, **_):
+def D_unrestricted(
+        chi : float, kappa : float,
+        N : float, sigma : float, 
+        pore_Radius : float, brentq_max_D = None,
+        **_):
     theta = N*sigma*2*np.pi*pore_Radius
     normalization = normalization_unrestricted(chi,kappa,theta, pore_Radius)
     min_D = 0
-    max_D = min(N,pore_Radius)
-    max_tries = 20
-    tries = 0
-    dD=max_D/(max_tries+1)
-    while tries < max_tries:
-        try:
-
-            _D = brentq(normalization, min_D, max_D)
-            break
-        except ValueError as e:
-            #print(e)
-            #print(f'trying to decrease upper boundary max_H_guess')
-            max_D = max_D-dD
-            #print(f"max_H_guess : {max_H_guess}")
-            tries = tries + 1
-    else:
-        raise ValueError()
+    if brentq_max_D is None: max_D = min(pore_Radius,N)
+    else: max_D = brentq_max_D
+    _D = normalization_find_root(normalization, min_D, max_D)
     return _D
 
 
