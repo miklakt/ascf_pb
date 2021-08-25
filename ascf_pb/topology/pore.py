@@ -48,7 +48,7 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float, pore_R
     phi_D  = phi_D_unrestricted(chi)
     def integrand(z, d):
         return Phi(z = z, d=d,
-        chi = chi, kappa=kappa, phi_D=phi_D)*(pore_Radius - z)
+        chi = chi, kappa=kappa, phi_D=phi_D)*abs(pore_Radius - z)
     def integral(d):
         return 2*np.pi*integrate.quad(integrand, 0, d, args=(d,))[0] - theta
     return integral
@@ -69,3 +69,62 @@ def D_unrestricted(
 
 
 ################################################################################
+def normalization_restricted(
+        chi : float, kappa : float, 
+        theta : float, R : float, 
+        pore_Radius : float
+        ):
+    def integrand(z, phi_R):
+        return Phi(z = z, d=R,
+        chi = chi, kappa=kappa, phi_D=phi_R)*abs(pore_Radius - z)
+    def integral(phi_R):
+        return 2*np.pi*integrate.quad(integrand, 0, R, args = (phi_R,))[0] - theta
+    return integral
+
+
+def phi_D_restricted(
+        chi : float, kappa : float, 
+        N : float, sigma : float, 
+        R : float, pore_Radius : float, 
+        **_):
+    phi_R_min = phi_D_unrestricted(chi)
+    phi_R_max = 0.99 #can be evaluated with a separate routine
+    theta = N*sigma*2*np.pi*pore_Radius
+    norm = normalization_restricted(chi, kappa, theta, R, pore_Radius)
+    phi_R = brentq(norm, phi_R_min, phi_R_max)
+    return phi_R
+
+
+################################################################################
+def phi_D_universal(
+        chi : float, kappa : float, 
+        N : float, sigma : float, 
+        R : float, pore_Radius : float, **_):
+    try:
+        D = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
+        print(R,D)
+        if R>=D:
+            #brush is not restricted
+            print("Unrestricted")
+            phi_D = phi_D_unrestricted(chi)
+        else:
+            #brush is restricted
+            print("Restricted")
+            phi_D = phi_D_restricted(chi, kappa, N, sigma, R, pore_Radius)
+    except:
+        #brush is restricted
+        print("Restricted")
+        phi_D = phi_D_restricted(chi, kappa, N, sigma, R, pore_Radius)
+    return phi_D
+
+
+def D_universal(
+        chi : float, kappa : float, 
+        N : float, sigma : float, 
+        R : float, pore_Radius : float, **_):
+    try:
+        D_ = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
+        if D_>R: D_=R
+    except:
+        D_ = R
+    return D_
