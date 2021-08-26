@@ -1,4 +1,5 @@
-from ascf_pb.solver import Pi, Phi
+from ascf_pb.topology.kappa import kappa_plain
+from ascf_pb.solver import Pi, Phi, min_phi_D
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
@@ -58,25 +59,9 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float):
 def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
     theta = N*sigma
     normalization = normalization_unrestricted(chi,kappa,theta)
-    min_D = 0
+    min_D_ = 0
     max_D = N
-    _D = normalization_find_root(normalization, min_D, max_D)
-    #max_tries = 20
-    #tries = 0
-    #dD=max_D/(max_tries+1)
-    #while tries < max_tries:
-    #    try:
-
-    #        _D = brentq(normalization, min_D, max_D)
-    #        break
-    #    except ValueError as e:
-    #        #print(e)
-    #        #print(f'trying to decrease upper boundary max_H_guess')
-    #        max_D = max_D-dD
-    #        #print(f"max_H_guess : {max_H_guess}")
-    #        tries = tries + 1
-    #else:
-    #    raise ValueError()
+    _D = normalization_find_root(normalization, min_D_, max_D)
     return _D
 
 
@@ -103,20 +88,36 @@ def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : f
 
 
 ################################################################################
-def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
-    D = D_unrestricted(chi, kappa, N, sigma)
-    if R>=D or R<=0:
-        #brush is not restricted
+def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None, **_):
+    if R is None:
         phi_D = phi_D_unrestricted(chi)
-    else:
-        #brush is restricted
+        return phi_D
+    #else
+    try:
+        print('Restriction notified.')
+        D = D_unrestricted(chi, kappa, N, sigma)
+        if R>=D or R<=0:
+            #brush is not restricted
+            print('Not restricted, D<=R')
+            phi_D = phi_D_unrestricted(chi)
+        else:
+            #brush is restricted
+            print('Restricted, D>=R')
+            phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
+    except:
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
     return phi_D
 
 
-def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
-    D = D_unrestricted(chi, kappa, N, sigma)
-    if D<=R: 
-        return D
+def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None, **_):
+    if R is not None:
+        try:
+            D = D_unrestricted(chi, kappa, N, sigma)
+            if D<=R: 
+                return D
+            else:
+                return R
+        except:
+            return R
     else:
-        return R
+        return D_unrestricted(chi, kappa, N, sigma)
