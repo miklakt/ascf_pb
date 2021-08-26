@@ -10,7 +10,7 @@ setup(
     description='Analytical Self-Consistent Field Polymer Brushes',
     author='Laktionov Mikhail',
     author_email = 'miklakt@gmail.com',
-    packages=['ascf_pb'],
+    packages=['ascf_pb', 'ascf_pb.topology'],
     install_requires=['numpy', 'scipy'],
     #entry_points={
     #    "console_scripts": [
