@@ -1,6 +1,6 @@
-from .profiles import build_phi_profile_solver,  build_Pi_profile_solver
-from .topology.plain import D_unrestricted, phi_D_unrestricted
-from .topology.kappa import kappa_plain
+from ascf_pb.profiles import build_phi_profile_solver,  build_Pi_profile_solver
+from ascf_pb.topology.plain import D_unrestricted, phi_D_unrestricted
+from ascf_pb.topology.kappa import kappa_plain
 from functools import partial
 from numpy import vectorize
 
@@ -13,7 +13,7 @@ phi = partial(build_phi_profile_solver,
     kappa_cb=kappa_plain, D_cb = D_unrestricted, 
     phi_D_cb=phi_D_unrestricted)
 
-Pi = partial(build_phi_profile_solver,
+Pi = partial(build_Pi_profile_solver,
     kappa_cb=kappa_plain, D_cb = D_unrestricted, 
     phi_D_cb=phi_D_unrestricted)
 
