@@ -12,7 +12,7 @@ def phi_D_unrestricted(chi: float, **_) -> float:
     Returns:
         float: volume fraction
     """
-    almost_zero = 1e-09
+    almost_zero = 1e-06
     almost_one = 1.0 - almost_zero
     if chi <= 0.5:  # good solvent
         phi_D = 0

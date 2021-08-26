@@ -73,7 +73,7 @@ def Phi_0(chi : float, kappa : float, d : float, phi_D : float):
     Returns:
         float: polymer density at the grafting surface
     """
-    eps=1e-09
+    eps=1e-06
     almost_one = 1-eps
     def fsol(phi_ : float):
         return Z(
