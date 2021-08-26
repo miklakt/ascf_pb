@@ -1,24 +1,7 @@
-from ascf_pb.topology.kappa import kappa_plain
 from ascf_pb.solver import Pi, Phi
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
-
-
-def normalization_find_root(normalization, a, b, max_tries=20):
-    tries = 0
-    d=b/(max_tries+1)
-    while tries < max_tries:
-        try:
-            root = brentq(normalization, a, b)
-            break
-        except ValueError as e:
-            b = b-d
-            print(f"brentq failed, changing interval boundaries")
-            tries = tries + 1
-    else:
-        raise ValueError("f(a) and f(b) still have the same signs")
-    return root
 
 
 def phi_D_unrestricted(chi: float, **_) -> float:
@@ -28,6 +11,8 @@ def phi_D_unrestricted(chi: float, **_) -> float:
     Returns:
         float: volume fraction
     """
+    almost_zero = 1e-09
+    almost_one = 1.0 - almost_zero
     if chi <= 0.5:  # good solvent
         phi_D = 0
     else:  # poor solvent
@@ -35,17 +20,14 @@ def phi_D_unrestricted(chi: float, **_) -> float:
         def fsol(_phi):
             return Pi(_phi, chi)
         # find the root with brentq method
-        min_phi = 0.00001  # exclude 0 from the roots
-        max_phi = 0.99999  # exclude 1 from the roots
         try:
-            phi_D = brentq(fsol, min_phi, max_phi)
+            phi_D = brentq(fsol, almost_zero, almost_one)
         except Exception as e:
             raise e
     return phi_D
 
 
 def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D : float):
-    #phi_D  = phi_D_unrestricted(chi)
     def integrand(z, d):
         return Phi(z = z, d=d,
         chi = chi, kappa=kappa, phi_D=phi_D)
@@ -63,7 +45,6 @@ def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
         max_D = N
     else:
         max_D = theta/phi_D
-    #_D = normalization_find_root(normalization, min_D, max_D)
     _D = brentq(normalization, min_D, max_D)
     return _D
 
@@ -112,14 +93,9 @@ def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : fl
 
 
 def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None, **_):
-    if R is not None:
-        try:
-            D = D_unrestricted(chi, kappa, N, sigma)
-            if D<=R: 
-                return D
-            else:
-                return R
-        except:
-            return R
+    D = D_unrestricted(chi, kappa, N, sigma)
+    if R is None: return D
+    if D<=R: 
+        return D
     else:
-        return D_unrestricted(chi, kappa, N, sigma)
+        return R
