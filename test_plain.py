@@ -15,3 +15,4 @@ phi_profile = build_phi_profile_solver(
 phi = [phi_profile[0](z) for z  in range(round(phi_profile[1]+1.5))]
 plt.plot(phi)
 plt.show()
+# %%

@@ -1,34 +1,13 @@
-from ascf_pb.solver import Pi, Phi
-from ascf_pb.topology import utils
+from ascf_pb.topology.pore import phi_D_unrestricted
+from ascf_pb.solver import Phi
+from ascf_pb.topology import common
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
 
+phi_D_unrestricted = common.phi_D_unrestricted
 
-def phi_D_unrestricted(chi: float, **_) -> float:
-    """Calculates polymer volume fraction at the end of the brush`
-    Args:
-        chi (float): Flory-Huggins parameter polymer-solvent
-    Returns:
-        float: volume fraction
-    """
-    almost_zero = 1e-06
-    almost_one = 1.0 - almost_zero
-    if chi <= 0.5:  # good solvent
-        phi_D = 0
-    else:  # poor solvent
-        # to get phi_H we have to find where osmotic pressure vanishes
-        def fsol(_phi):
-            return Pi(_phi, chi)
-        # find the root with brentq method
-        try:
-            phi_D = brentq(fsol, almost_zero, almost_one)
-        except Exception as e:
-            raise e
-    return phi_D
-
-
-def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D : float):
+def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D : float):    
     def integrand(z, d):
         return Phi(z = z, d=d,
         chi = chi, kappa=kappa, phi_D=phi_D)
@@ -46,7 +25,7 @@ def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
         max_D = N
     else:
         max_D = theta/phi_D
-    _D = utils.normalization_find_root(normalization, min_D, max_D)
+    _D = common.normalization_find_root(normalization, min_D, max_D)
     return _D
 
 
@@ -82,11 +61,11 @@ def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : fl
         D = D_unrestricted(chi, kappa, N, sigma)
         if R>=D or R<=0:
             #brush is not restricted
-            print('Not restricted, D<=R')
+            print('Not restricted, D<=R.')
             phi_D = phi_D_unrestricted(chi)
         else:
             #brush is restricted
-            print('Restricted, D>=R')
+            print('Restricted, D>=R.')
             phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
     except:
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
