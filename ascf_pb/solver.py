@@ -72,14 +72,21 @@ def Phi_0(chi : float, kappa : float, d : float, phi_D : float):
         phi_D (float): polymer density at the brush's end
     Returns:
         float: polymer density at the grafting surface
-    """    
+    """
+    eps=1e-09
+    almost_one = 1-eps
     def fsol(phi_ : float):
         return Z(
             phi = phi_, z = 0,
             d = d, kappa = kappa,
             chi = chi, phi_D = phi_D
         )
-    return brentq(fsol, 0.99999, phi_D)
+    try:
+        phi_0 = brentq(fsol, almost_one, phi_D)
+    except ValueError as e:
+        print("Warning brentq failed, phi must be too close to 1.0")
+        phi_0 = almost_one
+    return phi_0
 
 @lru_cache()
 def Phi(z : float, chi : float, kappa : float, d : float, phi_D : float):
