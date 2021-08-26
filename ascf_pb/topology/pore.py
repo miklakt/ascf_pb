@@ -1,24 +1,8 @@
 from ascf_pb.solver import Pi, Phi
+from ascf_pb.topology import utils
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
-
-def normalization_find_root(normalization, a, b, max_tries=20):
-    tries = 0
-    d=b/(max_tries+1)
-    while tries < max_tries:
-        try:
-            root = brentq(normalization, a, b)
-            break
-        except ValueError as e:
-            #print(e)
-            #print(f'trying to decrease upper boundary max_H_guess')
-            b = b-d
-            #print(f"max_H_guess : {max_H_guess}")
-            tries = tries + 1
-    else:
-        raise ValueError("f(a) and f(b) still have the same signs")
-    return root
 
 
 def phi_D_unrestricted(chi: float, **_) -> float:
@@ -64,7 +48,7 @@ def D_unrestricted(
     min_D = 0
     if brentq_max_D is None: max_D = min(pore_Radius,N)
     else: max_D = brentq_max_D
-    _D = normalization_find_root(normalization, min_D, max_D)
+    _D = utils.normalization_find_root(normalization, min_D, max_D)
     return _D
 
 

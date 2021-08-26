@@ -1,4 +1,5 @@
 from ascf_pb.solver import Pi, Phi
+from ascf_pb.topology import utils
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
@@ -45,7 +46,7 @@ def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
         max_D = N
     else:
         max_D = theta/phi_D
-    _D = brentq(normalization, min_D, max_D)
+    _D = utils.normalization_find_root(normalization, min_D, max_D)
     return _D
 
 
