@@ -6,8 +6,7 @@ import numpy as np
 
 phi_D_unrestricted = common.phi_D_unrestricted
 
-def normalization_unrestricted(chi : float, kappa : float, theta : float, pore_Radius : float):
-    phi_D  = phi_D_unrestricted(chi)
+def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D : float, pore_Radius : float):
     def integrand(z, d):
         return Phi(z = z, d=d,
         chi = chi, kappa=kappa, phi_D=phi_D)*abs(pore_Radius - z)
@@ -15,17 +14,22 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float, pore_R
         return 2*np.pi*integrate.quad(integrand, 0, d, args=(d,))[0] - theta
     return integral
 
+def D_boundary(pore_Radius : float, phi_const : float, theta : float):
+    D = pore_Radius - np.sqrt(pore_Radius**2 - theta/(np.pi*phi_const))
+    return D
 
 def D_unrestricted(
         chi : float, kappa : float,
         N : float, sigma : float, 
-        pore_Radius : float, brentq_max_D = None,
+        pore_Radius : float,
         **_):
+    phi_D  = phi_D_unrestricted(chi)
     theta = N*sigma*2*np.pi*pore_Radius
-    normalization = normalization_unrestricted(chi,kappa,theta, pore_Radius)
-    min_D = 0
-    if brentq_max_D is None: max_D = min(pore_Radius,N)
-    else: max_D = brentq_max_D
+    normalization = normalization_unrestricted(
+                        chi, kappa, theta, phi_D, pore_Radius)
+    min_D = D_boundary(pore_Radius, 1, theta)
+    if phi_D == 0: max_D=N
+    else: max_D = D_boundary(pore_Radius, phi_D, theta)#min(pore_Radius,N)
     _D = common.normalization_find_root(normalization, min_D, max_D)
     return _D
 
@@ -64,7 +68,6 @@ def phi_D_universal(
         R : float, pore_Radius : float, **_):
     try:
         D = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
-        print(R,D)
         if R>=D:
             #brush is not restricted
             print("Unrestricted")

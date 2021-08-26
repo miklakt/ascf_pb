@@ -42,13 +42,11 @@ def draw_pore(phi_profile, pore_Radius):
 
     return fig
 #%%
-chi = 0.45
+chi = 0.6
 sigma = 0.02
 N=1000
-pore_Radius = 150
+pore_Radius = 300
 phi_profile = get_pore_phi_profile(N,sigma, chi, pore_Radius)
 draw_profile(phi_profile,pore_Radius)
 fig = draw_pore(phi_profile, pore_Radius)
 fig.savefig(f'pore_figs/N_{N}_sigma_{sigma}_chi_{chi}_Radius_{pore_Radius}.pdf')
-
-# %%
