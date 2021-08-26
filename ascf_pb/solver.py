@@ -107,3 +107,14 @@ def Phi(z : float, chi : float, kappa : float, d : float, phi_D : float):
             chi = chi, phi_D = phi_D
         )
     return brentq(fsol, a, b)
+
+
+def min_mu(chi : float):
+    if chi<=0.5:
+        return 0
+    else:
+        return 1-np.log(1/(2*chi)) - 2*chi
+
+
+def min_phi_D(chi : float):
+    return max(0, 1-1/(2*chi))
