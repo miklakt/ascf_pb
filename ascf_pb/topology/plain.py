@@ -5,6 +5,8 @@ from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
 
+required_keys = ['N', 'sigma', 'chi', 'z']
+
 phi_D_unrestricted = common.phi_D_unrestricted
 
 def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D : float):    
