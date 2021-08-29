@@ -25,7 +25,7 @@ def __generate_docstring(keys, return_):
         '\nArgs:\n'+\
         '\n'.join([f'{k} : {__keys_description[k]}' for k in keys])+\
         '\n\nReturns:'+\
-        '\n(float): '.join(f'{__keys_description[return_]}')
+        '\n(float): '+f'{__keys_description[return_]}'
     return docstring
 
 def __ignore_extra_kwargs(func):
