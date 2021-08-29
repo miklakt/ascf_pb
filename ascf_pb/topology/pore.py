@@ -15,7 +15,7 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D 
     return integral
 
 def D_boundary(pore_Radius : float, phi_const : float, theta : float):
-    D = pore_Radius - np.sqrt(abs(pore_Radius**2 - theta/(np.pi*phi_const)))
+    D = pore_Radius - np.sqrt(pore_Radius**2 - theta/(np.pi*phi_const))
     return D
 
 def D_unrestricted(
@@ -28,9 +28,9 @@ def D_unrestricted(
     normalization = normalization_unrestricted(
                         chi, kappa, theta, phi_D, pore_Radius)
     min_D = D_boundary(pore_Radius, 1, theta)
-    min_D = 0
+    #min_D = 0
     if phi_D == 0: max_D=min(pore_Radius,N)
-    else: max_D = min(pore_Radius,N)
+    else: max_D = max_D=min(pore_Radius,D_boundary(pore_Radius, phi_D, theta))#min(pore_Radius,N)#
     _D = common.normalization_find_root(normalization, min_D, max_D)
     return _D
 
