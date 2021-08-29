@@ -2,7 +2,7 @@ import numpy as np
 import math
 from typing import Tuple, Callable
 
-def kappa_plain(N : float, **_):
+def kappa_plain(N : float):
     k = np.pi/(2*N)
     return k
 
@@ -19,7 +19,7 @@ def get_n(N : float, g : int, q : int):
     return n
 
 def kappa_regular_dendron(g : int, q : int):
-    def kappa(N, **_):
+    def kappa(N):
         n = get_n(N, g, q)
         return kappa_regular_dendron_gnq(g, n, q)
     return kappa

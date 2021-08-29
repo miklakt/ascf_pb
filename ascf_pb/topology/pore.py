@@ -1,3 +1,4 @@
+from functools import lru_cache
 from ascf_pb.solver import Phi
 from ascf_pb.topology import common
 from scipy.optimize import brentq
@@ -23,8 +24,7 @@ def D_boundary(pore_Radius : float, phi_const : float, theta : float):
 def D_unrestricted(
         chi : float, kappa : float,
         N : float, sigma : float, 
-        pore_Radius : float,
-        **_):
+        pore_Radius : float):
     phi_D  = phi_D_unrestricted(chi)
     theta = N*sigma*2*np.pi*pore_Radius
     normalization = normalization_unrestricted(
@@ -54,8 +54,7 @@ def normalization_restricted(
 def phi_D_restricted(
         chi : float, kappa : float, 
         N : float, sigma : float, 
-        R : float, pore_Radius : float, 
-        **_):
+        R : float, pore_Radius : float):
     phi_R_min = phi_D_unrestricted(chi)
     phi_R_max = 0.99 #can be evaluated with a separate routine
     theta = N*sigma*2*np.pi*pore_Radius
@@ -65,10 +64,11 @@ def phi_D_restricted(
 
 
 ################################################################################
+@lru_cache()
 def phi_D_universal(
         chi : float, kappa : float, 
         N : float, sigma : float, 
-        R : float, pore_Radius : float, **_):
+        R : float, pore_Radius : float):
     try:
         D = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
         if R>=D:
@@ -85,11 +85,11 @@ def phi_D_universal(
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R, pore_Radius)
     return phi_D
 
-
+@lru_cache()
 def D_universal(
         chi : float, kappa : float, 
         N : float, sigma : float, 
-        R : float, pore_Radius : float, **_):
+        R : float, pore_Radius : float):
     try:
         D_ = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
         if D_>R: D_=R

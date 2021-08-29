@@ -1,4 +1,6 @@
+from functools import lru_cache
 import importlib
+import inspect
 import ascf_pb.solver
 from ascf_pb.topology.kappa import kappa_plain
 
@@ -26,20 +28,30 @@ def __generate_docstring(keys, return_):
         '\n(float): '.join(f'{__keys_description[return_]}')
     return docstring
 
+def __ignore_extra_kwargs(func):
+    parameters = inspect.signature(func).parameters
+    def wrapped(**kwargs):
+        new_kwargs = {k:kwargs[k] for k in kwargs if k in parameters}
+        return func(**new_kwargs)
+    return wrapped
+
+
+
 def _D(kappa_cb, topology : str, **kwargs):
     topology_module = importlib.import_module('ascf_pb.topology.' + topology)
-    D_cb = topology_module.D_universal
+    D_cb = __ignore_extra_kwargs(topology_module.D_universal)
     
-    kappa = kappa_cb(**kwargs)
+    kappa = __ignore_extra_kwargs(kappa_cb)(**kwargs)
     D = D_cb(kappa = kappa,**kwargs)
     return D
 
 def _phi(kappa_cb, topology : str, **kwargs):
     topology_module = importlib.import_module('ascf_pb.topology.' + topology)
-    D_cb = topology_module.D_universal
-    phi_D_cb = topology_module.phi_D_universal
+    D_cb = __ignore_extra_kwargs(topology_module.D_universal)
+    phi_D_cb = __ignore_extra_kwargs(topology_module.phi_D_universal)
+
     
-    kappa = kappa_cb(**kwargs)
+    kappa = __ignore_extra_kwargs(kappa_cb)(**kwargs)
     D = D_cb(kappa = kappa,**kwargs)
     phi_D = phi_D_cb(kappa = kappa, **kwargs)
     chi = kwargs['chi']
@@ -55,6 +67,7 @@ def D(kappa_cb = kappa_plain, topology : str = 'plain', **kwargs):
     required_keys.remove('z') 
     unused_keys = [k for k in required_keys if k not in kwargs]
     print ('Keys unused:', unused_keys)
+    @lru_cache()
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
         unused_args.update(new_kwargs)
@@ -67,6 +80,7 @@ def phi(kappa_cb = kappa_plain, topology : str = 'plain', **kwargs):
     required_keys = __get_required_keys(topology)  
     unused_keys = [k for k in required_keys if k not in kwargs]
     print ('Keys unused:', unused_keys)
+    @lru_cache()
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
         unused_args.update(new_kwargs)
@@ -79,6 +93,7 @@ def Pi(kappa_cb = kappa_plain, topology : str = 'plain', **kwargs):
     required_keys = __get_required_keys(topology)  
     unused_keys = [k for k in required_keys if k not in kwargs]
     print ('Keys unused:', unused_keys)
+    @lru_cache()
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
         unused_args.update(new_kwargs)

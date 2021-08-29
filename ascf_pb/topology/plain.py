@@ -1,3 +1,4 @@
+from functools import lru_cache
 from ascf_pb.topology.pore import phi_D_unrestricted
 from ascf_pb.solver import Phi
 from ascf_pb.topology import common
@@ -18,7 +19,7 @@ def normalization_unrestricted(chi : float, kappa : float, theta : float, phi_D 
     return integral
 
 
-def D_unrestricted(chi : float, kappa : float, N : float, sigma : float, **_):
+def D_unrestricted(chi : float, kappa : float, N : float, sigma : float):
     theta = N*sigma
     phi_D = phi_D_unrestricted(chi)
     normalization = normalization_unrestricted(chi, kappa, theta, phi_D)
@@ -43,7 +44,7 @@ def normalization_restricted(
     return integral
 
 
-def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : float, **_):
+def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : float):
     phi_R_min = phi_D_unrestricted(chi)
     phi_R_max = 0.99 #can be evaluated with a separate routine
     theta = sigma*N
@@ -53,7 +54,8 @@ def phi_D_restricted(chi : float, kappa : float, N : float, sigma : float, R : f
 
 
 ################################################################################
-def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None, **_):
+@lru_cache()
+def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None):
     if R is None:
         phi_D = phi_D_unrestricted(chi)
         return phi_D
@@ -73,8 +75,8 @@ def phi_D_universal(chi : float, kappa : float, N : float, sigma : float, R : fl
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
     return phi_D
 
-
-def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None, **_):
+@lru_cache()
+def D_universal(chi : float, kappa : float, N : float, sigma : float, R : float = None):
     D = D_unrestricted(chi, kappa, N, sigma)
     if R is None: return D
     if D<=R: 
