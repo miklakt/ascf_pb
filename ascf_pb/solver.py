@@ -18,6 +18,9 @@ with given parameters.
 miklakt@gmail.com
 """
 
+class SolverError(Exception):
+    pass
+
 @lru_cache()
 def Pi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure for a given local polymer volume fraction
@@ -113,7 +116,11 @@ def Phi(z : float, chi : float, kappa : float, d : float, phi_D : float):
             d = d, kappa = kappa,
             chi = chi, phi_D = phi_D
         )
-    return brentq(fsol, a, b)
+    try:
+        return brentq(fsol, a, b)
+    except ValueError as e:
+        print("solver.Phi() brentq failed")
+        raise SolverError("solver.Phi() brentq failed")
 
 
 def min_mu(chi : float):

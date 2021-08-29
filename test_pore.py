@@ -1,4 +1,5 @@
 #%%
+from ascf_pb.topology.kappa import kappa_plain
 import numpy as np
 import matplotlib.pyplot as plt
 from ascf_pb import profile_factory, topology
@@ -33,14 +34,15 @@ def draw_pore(phi_profile, pore_Radius, D):
 
     return fig
 #%%
-chi = 0.0
+import ascf_pb.topology.kappa as kappa
+chi = 0.3
 sigma = 0.02
 N=1000
-pore_Radius = 200
-phi_profile = profile_factory.phi(topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)
-D = profile_factory.D(topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)
+pore_Radius = 150
+#kappa_cb = kappa.kappa_regular_dendron(2,3)
+kappa_cb = kappa.kappa_plain
+phi_profile = profile_factory.phi(kappa_cb =kappa_cb, topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)
+D = profile_factory.D(topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)()
 draw_profile(phi_profile,pore_Radius)
 fig = draw_pore(phi_profile, pore_Radius, D)
 fig.savefig(f'pore_figs/N_{N}_sigma_{sigma}_chi_{chi}_Radius_{pore_Radius}.pdf')
-
-# %%
