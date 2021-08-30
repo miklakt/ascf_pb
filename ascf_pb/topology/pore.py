@@ -1,4 +1,6 @@
 from functools import lru_cache
+
+from scipy.optimize.zeros import brenth
 from ascf_pb.solver import Phi
 from ascf_pb.topology import common
 from scipy.optimize import brentq
@@ -32,7 +34,7 @@ def D_unrestricted(
     min_D = D_boundary(pore_Radius, 1, theta)
     #min_D = 0
     if phi_D == 0: max_D=min(pore_Radius,N)
-    else: max_D = max_D=min(pore_Radius,D_boundary(pore_Radius, phi_D, theta))#min(pore_Radius,N)#
+    else: max_D=min(pore_Radius,D_boundary(pore_Radius, phi_D, theta))#min(pore_Radius,N)#
     _D = common.normalization_find_root(normalization, min_D, max_D)
     return _D
 
@@ -96,3 +98,27 @@ def D_universal(
     except:
         D_ = R
     return D_
+
+################################################################################
+def normalization_pore_opening(
+    chi : float, kappa : float, 
+    N : float, sigma : float, phi_D : float
+    ):
+    def integrand(z, d):
+        return Phi(z = z, d=d,
+            chi = chi, kappa=kappa, phi_D=phi_D)*abs(d - z)
+    def integral(d):
+        return 2*np.pi*integrate.quad(integrand, 0, d, args=(d,))[0] - N*sigma*2*np.pi*d
+    return integral
+
+def opening_pore_Radius(
+    chi : float, kappa : float,
+    N : float, sigma : float,
+    ):
+    phi_D = phi_D_unrestricted(chi)
+    min_pore_R = 2*N*sigma
+    if phi_D == 0: max_pore_R=N
+    else: max_pore_R=2*N*sigma/phi_D
+    normalization = normalization_pore_opening(chi, kappa, N, sigma, phi_D)
+    pore_R = brentq(normalization, min_pore_R, max_pore_R)
+    return pore_R
