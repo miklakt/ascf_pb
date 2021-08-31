@@ -124,5 +124,5 @@ def opening_pore_Radius(
     if phi_D == 0: max_pore_R=N
     else: max_pore_R=2*N*sigma/phi_D
     normalization = normalization_pore_opening(chi, kappa, N, sigma, phi_D)
-    pore_R = brentq(normalization, min_pore_R, max_pore_R)
+    pore_R = common.normalization_find_root(normalization, min_pore_R, max_pore_R)
     return pore_R
