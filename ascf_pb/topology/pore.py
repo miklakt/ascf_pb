@@ -103,6 +103,7 @@ def D_universal(
         D_ = R
     return D_
 
+
 ################################################################################
 def normalization_pore_opening(
     chi : float, kappa : float, 
@@ -115,6 +116,7 @@ def normalization_pore_opening(
         return 2*np.pi*integrate.quad(integrand, 0, d, args=(d,))[0] - theta(N, sigma, d)
     return integral
 
+@lru_cache()
 def opening_pore_Radius(
     chi : float, kappa : float,
     N : float, sigma : float,
