@@ -1,6 +1,7 @@
 from scipy.optimize import brentq
 from ascf_pb.solver import Pi
 from ascf_pb.solver import SolverError
+
 def normalization_find_root(normalization, a, b, max_tries=20):
     tries = 0
     d=(b-a)/(max_tries+1)

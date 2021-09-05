@@ -59,7 +59,7 @@ def _Pi(kappa_cb, topology : str, **kwargs):
     return ascf_pb.solver.Pi(_phi(kappa_cb, topology, **kwargs), kwargs['chi'])
 
 
-def D(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs): 
+def D(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs): 
     required_keys = __get_required_keys(topology)
     required_keys.remove('z') 
     unused_keys = [k for k in required_keys if k not in kwargs]
@@ -73,7 +73,7 @@ def D(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs):
     wrapped.__doc__=__generate_docstring(unused_keys, 'D')
     return wrapped
 
-def phi(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs): 
+def phi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs): 
     required_keys = __get_required_keys(topology)  
     unused_keys = [k for k in required_keys if k not in kwargs]
     print ('Keys unused:', unused_keys)
@@ -86,7 +86,7 @@ def phi(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs):
     wrapped.__doc__=__generate_docstring(unused_keys, 'phi')
     return wrapped
 
-def Pi(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs): 
+def Pi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs): 
     required_keys = __get_required_keys(topology)  
     unused_keys = [k for k in required_keys if k not in kwargs]
     print ('Keys unused:', unused_keys)
@@ -101,7 +101,7 @@ def Pi(kappa_cb = kappa.linear, topology : str = 'plain', **kwargs):
 
 
 ################################################################################
-def pore_radius(kappa_cb = kappa.linear, **kwargs):
+def pore_radius(kappa_cb = kappa.kappa, **kwargs):
     from ascf_pb.topology.pore import opening_pore_Radius
     required_keys = inspect.signature(opening_pore_Radius).parameters
     unused_keys = [k for k in required_keys if k not in kwargs]

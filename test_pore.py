@@ -37,9 +37,11 @@ chi = 0.3
 sigma = 0.02
 N=1000
 pore_Radius = 150
-#kappa_cb = kappa.kappa_regular_dendron(2,3)
-kappa_cb = kappa.linear
-phi_profile = factory.phi(kappa_cb =kappa_cb, topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)
+eta = kappa.regular_dendron_eta(2,3)
+phi_profile = factory.phi(topology='pore',
+        N=N, sigma=sigma, 
+        chi=chi, pore_Radius=pore_Radius, 
+        R = pore_Radius, eta = eta)
 D = factory.D(topology='pore',N=N,sigma=sigma, chi=chi, pore_Radius=pore_Radius, R = pore_Radius)()
 draw_profile(phi_profile,pore_Radius)
 fig = draw_pore(phi_profile, pore_Radius, D)
