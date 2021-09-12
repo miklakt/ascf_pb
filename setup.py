@@ -12,9 +12,9 @@ setup(
     author_email = 'miklakt@gmail.com',
     packages=['ascf_pb', 'ascf_pb.topology'],
     install_requires=['numpy', 'scipy'],
-    #entry_points={
-    #    "console_scripts": [
-    #        "ascf_pb=ascf_pb.__main__:main",
-    #    ]
-    #},
+    entry_points={
+        "console_scripts": [
+            "ascf_pb=ascf_pb.__main__:main",
+        ]
+    },
 )
