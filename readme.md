@@ -34,14 +34,24 @@ python -m ascf_pb N sigma chi [-eta eta] [-R R] [-pore_R pore_Radius] [-t topolo
 ```
 
 positional arguments:
+  
   N                    the chain length of a polymer brush
+  
   sigma                number of chains per unit area
+  
   chi                  Flory-Huggins polymer-solvent interaction parameter
 
-positional arguments:
-  N                    the chain length of a polymer brush
-  sigma                number of chains per unit area
-  chi                  Flory-Huggins polymer-solvent interaction parameter
+optional arguments:
+
+  -eta eta             topological parameter default is 1.0
+
+  -R R                 distance to the restriction surface
+
+  -pore_R pore_Radius  pore radius
+
+  -t topology          system geometry: plain, pore
+
+  -z_step z_step       profile fidelity
 
 The default output consist of brush thickness D and
 volume fraction profile (an array of z coordinates and an array of volume fraction for a given coordinate)
