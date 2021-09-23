@@ -1,6 +1,16 @@
+"""
+The script provides routines to calculate pore topology restricted 
+and unrestrestricted polymer brushes. 
+
+Docs for this module are not yet written, please take a look on 
+plain.py script in the same directory, to get the idea of what is going on
+
+@author: Mikhail Laktionov
+miklakt@gmail.com
+"""
+
 from functools import lru_cache
 
-from scipy.optimize.zeros import brenth
 from ascf_pb.solver import Phi
 from ascf_pb.topology import common
 from scipy.optimize import brentq

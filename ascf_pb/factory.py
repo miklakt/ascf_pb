@@ -300,6 +300,6 @@ def pore_radius(kappa_cb = kappa.kappa, **kwargs):
         unused_args.update(new_kwargs)
         unused_args.update(kwargs)
         unused_args['kappa'] = __ignore_extra_kwargs(kappa_cb)(**unused_args)
-        return opening_pore_Radius(**unused_args)
+        return __ignore_extra_kwargs(opening_pore_Radius)(**unused_args)
     wrapped.__doc__=__generate_docstring(unused_keys, 'Pi')
     return wrapped
