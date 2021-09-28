@@ -138,3 +138,28 @@ def opening_pore_Radius(
     normalization = normalization_pore_opening(chi, kappa, N, sigma, phi_D)
     pore_R = common.normalization_find_root(normalization, min_pore_R, max_pore_R)
     return pore_R
+
+
+def normalization_chi_opening(
+    kappa : float, 
+    N : float, sigma : float,
+    R : float
+    ):
+    def integrand(z, chi):
+        phi_D = phi_D_unrestricted(chi)
+        return Phi(z = z, d=R,
+            chi = chi, kappa=kappa, phi_D=phi_D)*abs(R - z)
+    def integral(chi):
+        return 2*np.pi*integrate.quad(integrand, 0, R, args=(chi,))[0] - theta(N, sigma, R)
+    return integral
+
+@lru_cache()
+def chi_opening(
+    kappa : float,
+    N : float, sigma : float, R : float
+    ):
+    chi_min=0
+    chi_max=1
+    normalization = normalization_chi_opening(kappa, N, sigma, R)
+    chi_open = brentq(normalization, chi_min, chi_max)
+    return chi_open
