@@ -34,7 +34,7 @@ def draw_pore(phi_profile, pore_Radius, D):
 #%%
 import ascf_pb.topology.kappa as kappa
 from ascf_pb import factory
-chi = 0.45435149818074694
+chi = 0.3
 sigma = 0.02
 N=1000
 pore_Radius = 150
