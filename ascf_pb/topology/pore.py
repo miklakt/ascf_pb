@@ -161,5 +161,8 @@ def chi_opening(
     chi_min=0
     chi_max=1
     normalization = normalization_chi_opening(kappa, N, sigma, R)
-    chi_open = brentq(normalization, chi_min, chi_max)
+    try:
+        chi_open = brentq(normalization, chi_min, chi_max)
+    except:
+        chi_open = None
     return chi_open
