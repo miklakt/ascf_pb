@@ -4,7 +4,7 @@ polymer density and osmotic pressure profiles.
 
 The script allows users to create closures(callbacks) for such calculations.
 One has to provide system geometry (default - 'plain') 
-and then can create a closure object by calling coresponding factory-function 
+and then can create a closure object by calling corresponding factory-function 
 to study dependencies of brush thickness, 
 polymer density and osmotic pressure profiles from varying arguments.
 
@@ -40,8 +40,27 @@ import importlib
 import inspect
 from functools import lru_cache
 
+import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
+
 import ascf_pb.solver
 from ascf_pb.topology import kappa
+
+config = dict(
+    vectorize = False
+)
+
+def __vectorize_optional(func):
+    if config["vectorize"]:
+        return np.vectorize(func)
+    else:
+        return func
+
+def set_config(**kwargs):
+    config.update(kwargs)
+
 
 #used to generate descriptions and docstrings
 __keys_description = dict(
@@ -143,14 +162,14 @@ def _phi(kappa_cb, topology : str, **kwargs) -> float:
 
 def _Pi(kappa_cb, topology : str, **kwargs) -> float:
     """Calculates local osmotic pressure, imports necessary functions from
-    coresponding topology module.
+    corresponding topology module.
 
     Args:
         kappa_cb (Callable): kappa parameter callback
         topology (str): topology module name, geometry of the system (plain, pore)
 
     Returns:
-        float: local polymer density
+        float: local osmotic pressure
     """ 
     return ascf_pb.solver.Pi(_phi(kappa_cb, topology, **kwargs), kwargs['chi'])
 
@@ -179,8 +198,8 @@ def D(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
     required_keys = __get_required_keys(topology)
     required_keys.remove('z') 
     unused_keys = [k for k in required_keys if k not in kwargs]
-    print (f'Closure created, bound keys: {list(kwargs.keys())}')
-    print (f'Keys unused: {unused_keys}')
+    logging.info(f'Closure created, bound keys: {list(kwargs.keys())}')
+    logging.info(f'Keys unused: {unused_keys}')
     @lru_cache()
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
@@ -188,7 +207,7 @@ def D(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
         unused_args.update(kwargs)
         return _D(kappa_cb = kappa_cb, topology = topology, **unused_args)
     wrapped.__doc__=__generate_docstring(unused_keys, 'D')
-    return wrapped
+    return __vectorize_optional(wrapped)
 
 def phi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
     """Factory function produces closure with bound parameters provided in
@@ -214,8 +233,8 @@ def phi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
     required_keys = __get_required_keys(topology)
     #compare it with provided in the function call
     unused_keys = [k for k in required_keys if k not in kwargs]
-    print (f'Closure created, bound keys: {list(kwargs.keys())}')
-    print (f'Keys unused: {unused_keys}')
+    logging.info(f'Closure created, bound keys: {list(kwargs.keys())}')
+    logging.info(f'Keys unused: {unused_keys}')
     #create cached inner function to use as closure
     @lru_cache()
     def wrapped(*new_args, **new_kwargs):
@@ -230,7 +249,8 @@ def phi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
     #automated docstring for closure, to make use of built-in help()
     wrapped.__doc__=__generate_docstring(unused_keys, 'phi')
     #note the absence of (), we return a closure, not the final result
-    return wrapped
+    return __vectorize_optional(wrapped)
+
 
 def Pi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs): 
     """Factory function produces closure with bound parameters provided in
@@ -255,8 +275,8 @@ def Pi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
     #check the comments in function phi, to know what's going on
     required_keys = __get_required_keys(topology)  
     unused_keys = [k for k in required_keys if k not in kwargs]
-    print (f'Closure created, bound keys: {list(kwargs.keys())}')
-    print (f'Keys unused: {unused_keys}')
+    logging.info(f'Closure created, bound keys: {list(kwargs.keys())}')
+    logging.info(f'Keys unused: {unused_keys}')
     @lru_cache()
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
@@ -264,8 +284,7 @@ def Pi(kappa_cb = kappa.kappa, topology : str = 'plain', **kwargs):
         unused_args.update(kwargs)
         return _Pi(kappa_cb = kappa_cb, topology = topology, **unused_args)
     wrapped.__doc__=__generate_docstring(unused_keys, 'Pi')
-    return wrapped
-
+    return __vectorize_optional(wrapped)
 
 ################################################################################
 def pore_radius(kappa_cb = kappa.kappa, **kwargs):
@@ -293,8 +312,8 @@ def pore_radius(kappa_cb = kappa.kappa, **kwargs):
     required_keys = inspect.signature(opening_pore_Radius).parameters
     unused_keys = [k for k in required_keys if k not in kwargs]
     unused_keys.remove('kappa')
-    print (f'Closure created, bound keys: {kwargs.keys()}')
-    print (f'Keys unused: {unused_keys}')
+    logging.info(f'Closure created, bound keys: {kwargs.keys()}')
+    logging.info(f'Keys unused: {unused_keys}')
     def wrapped(*new_args, **new_kwargs):
         unused_args = {k:v for k,v in zip(unused_keys, new_args)}
         unused_args.update(new_kwargs)
@@ -302,4 +321,4 @@ def pore_radius(kappa_cb = kappa.kappa, **kwargs):
         unused_args['kappa'] = __ignore_extra_kwargs(kappa_cb)(**unused_args)
         return __ignore_extra_kwargs(opening_pore_Radius)(**unused_args)
     wrapped.__doc__=__generate_docstring(unused_keys, 'Pi')
-    return wrapped
+    return __vectorize_optional(wrapped)
