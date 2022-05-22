@@ -6,11 +6,15 @@ HERE = pathlib.Path(__file__).parent
 
 setup(
     name='ascf_pb',
-    version='0.0.5',
+    version='0.0.6',
     description='Analytical Self-Consistent Field Polymer Brushes',
     author='Laktionov Mikhail',
     author_email = 'miklakt@gmail.com',
-    packages=['ascf_pb', 'ascf_pb.topology'],
+    packages=[
+        'ascf_pb', 
+        'ascf_pb.topology', 
+        'ascf_pb.particle_geometry'
+        ],
     install_requires=['numpy', 'scipy'],
     entry_points={
         "console_scripts": [

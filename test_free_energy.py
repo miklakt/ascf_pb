@@ -1,9 +1,13 @@
 #%%
 import matplotlib.pyplot as plt
 import ascf_pb
-from ascf_pb.topology import kappa
-from ascf_pb import factory
+import ascf_pb.particle_geometry
 import numpy as np
+
+import logging
+import sys
+logging.basicConfig(level = logging.INFO, stream=sys.stdout)
+
 kwargs_ = dict(
     chi=0.2,
     N=1000,
@@ -11,22 +15,21 @@ kwargs_ = dict(
     R = 100
 )
 
-phi_profile = np.vectorize(factory.phi(**kwargs_))
-Pi_profile = np.vectorize(factory.Pi(**kwargs_))
-D = factory.D(**kwargs_)()
-z  = np.arange(0, D+0.2, 0.1)
-phi = phi_profile(z)
-Pi = Pi_profile(z)
+ascf_pb.set_config(vectorize = True)
 
-h = 4
-A=16
-V = A*h
-pz = np.arange(h, D+h, 0.5)
-Pi_int = np.array(
-        [
-        ascf_pb.osmotic_free_energy(z_-h/2, z_+h/2, A, Pi_profile) for z_ in pz
-        ]
-    )/V
+Pi_func = np.vectorize(ascf_pb.Pi(**kwargs_))
+D = ascf_pb.D(**kwargs_)()
+#%%
+z  = np.arange(0, D+0.2, 0.1)
+ph = 4
+pw = 4
+pz = np.arange(ph, D+ph, 0.5)
+V = ascf_pb.particle_geometry.cylinder.volume(ph,pw)
+pz = np.arange(ph, D+ph, 0.5)
+osmotic_func = ascf_pb.osmotic_free_energy(ph=ph, pw=pw, **kwargs_)
+#%%
+Pi = Pi_func(z)
+osmotic = osmotic_func
 # %%
 plt.plot(z,Pi, label = "$\Pi$")
 plt.plot(pz,Pi_int, label = "osmotic")
