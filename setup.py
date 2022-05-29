@@ -11,9 +11,9 @@ setup(
     author='Laktionov Mikhail',
     author_email = 'miklakt@gmail.com',
     packages=[
-        'ascf_pb', 
-        'ascf_pb.topology', 
-        'ascf_pb.particle_geometry'
+        'ascf_pb',
+        'ascf_pb.particle_geometry',
+        'ascf_pb.brush_geometry'
         ],
     install_requires=['numpy', 'scipy'],
     entry_points={
