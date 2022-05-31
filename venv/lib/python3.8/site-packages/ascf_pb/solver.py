@@ -39,7 +39,7 @@ class SolverError(Exception):
     """    
     pass
 
-#@lru_cache()
+@lru_cache()
 def Pi(phi: float, chi: float) -> float:
     """Calculate osmotic pressure for a given local polymer volume fraction
     Args:
@@ -51,7 +51,7 @@ def Pi(phi: float, chi: float) -> float:
     Pi = -np.log(1-phi)-chi*phi**2-phi
     return Pi
 
-#@lru_cache()
+@lru_cache()
 def mu(phi : float, chi : float) -> float:
     """Chemical potential for a given volume fraction and solvent regime
     Args:
@@ -85,7 +85,7 @@ def Z(
     """    
     return d**2 - z**2 + (2/3)/kappa**2*(mu(phi_D,chi) - mu(phi,chi))
 
-#@lru_cache()
+@lru_cache()
 def Phi_0(
     chi : float, kappa : float, d : float, 
     phi_D : float
@@ -119,7 +119,7 @@ def Phi_0(
         phi_0 = almost_one
     return phi_0
 
-#@lru_cache()
+@lru_cache()
 def Phi(
     z : float, chi : float, kappa : float, 
     d : float, phi_D : float) -> float:

@@ -7,7 +7,7 @@ import numpy as np
 
 required_keys = ['ph', 'pw', "pc"]
 
-def get_integration_interval(ph : float, pc : float) -> tuple:
+def integration_interval(ph : float, pc : float) -> tuple:
     return pc-ph/2, pc+ph/2
 
 def surface_integrand(ph : float, pw : float):

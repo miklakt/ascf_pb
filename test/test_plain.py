@@ -1,10 +1,11 @@
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
-from ascf_pb.topology import kappa
 import ascf_pb
+import ascf_pb.topology
+from functools import partial
 
-ascf_pb.set_config(vectorize = True)
+brush = ascf_pb.BrushSolver()
 
 kwargs_ = dict(
     chi=0.2,
@@ -12,13 +13,11 @@ kwargs_ = dict(
     sigma = 0.02,
     R = 100
 )
+#%%
+eta = ascf_pb.topology.regular_dendron_eta(2, 3)
+D = brush.D(**kwargs_,eta=eta)
+phi_profile = brush.phi(**kwargs_, z = np.linspace(0, D, 100), eta = eta)
 
-kappa_cb = kappa.kappa
-eta = kappa.regular_dendron_eta(2,3)
-phi_profile = ascf_pb.phi(kappa_cb=kappa_cb, eta=eta, **kwargs_)
-D = ascf_pb.D(kappa_cb=kappa_cb, **kwargs_)()
-z = np.arange(0, D)
-phi = phi_profile(z)
-plt.plot(phi)
+plt.plot(phi_profile)
 plt.show()
 # %%

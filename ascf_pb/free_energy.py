@@ -12,14 +12,14 @@ required_keys = [
 ]
 
 
-def osmotic_free_energy(z0 : float, z1 : float, volume_integrand : Callable, Pi_cb : Callable) -> float:
+def osmotic_free_energy(z0 : float, z1 : float, volume_integrand : Callable, Pi_z : Callable) -> float:
     if not isinstance(volume_integrand, Callable):
         def integrand(z_):
-            return Pi_cb(z0)*volume_integrand
+            return Pi_z(z0)*volume_integrand
     # if A_cb provided as a callable
     else:
         def integrand(z_):
-            return Pi_cb(z0)*volume_integrand(z_-z0)
+            return Pi_z(z0)*volume_integrand(z_-z0)
 
     fe = integrate.quad(integrand, z0, z1)[0]
     return fe
@@ -39,7 +39,7 @@ def gamma_phi(phi : float, chi : float, chi_PC : float, expansion_coefs : list) 
 def surface_free_energy(
         z0 : float, z1 : float, 
         surface_integrand : Callable, 
-        phi_cb : Callable, 
+        phi_z : Callable, 
         chi : float, 
         chi_PC : float, 
         expansion_coefs : list
@@ -50,7 +50,7 @@ def surface_free_energy(
         expansion_coefs = expansion_coefs
     )
     def integrand(z_):
-        return surface_integrand(z_-z0)*gamma(phi_cb(z_))
+        return surface_integrand(z_-z0)*gamma(phi_z(z_))
     fe = integrate.quad(integrand, z0, z1)[0]
     return fe
 
@@ -58,13 +58,13 @@ def total_free_energy_apprx(
     z: float,
     surface : float,
     volume : float,
-    phi_cb : Callable,
+    phi_z : Callable,
     Pi_cb : Callable,
     chi : float,
     chi_PC : float,
     expansion_coefs : list
 ):
-    phi = phi_cb(z)
+    phi = phi_z(z)
     Pi = Pi_cb(z)
     gamma = gamma_phi(phi, chi, chi_PC, expansion_coefs)
     fe = volume*Pi + surface*gamma
@@ -75,7 +75,7 @@ def total_free_energy(
     z1 : float, 
     surface_integrand : Callable, 
     volume_integrand : Callable, 
-    phi_cb : Callable, 
+    phi_z : Callable, 
     Pi_cb : Callable,
     chi : float, 
     chi_PC : float,
@@ -89,7 +89,7 @@ def total_free_energy(
     surf = surface_free_energy(
         z0, z1, 
         surface_integrand, 
-        phi_cb, 
+        phi_z, 
         chi, 
         chi_PC, 
         expansion_coefs
