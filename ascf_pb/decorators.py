@@ -65,7 +65,7 @@ def combine_signatures(
 
     if positional_or_keyword_order:
         #if any(params[key].default != inspect.Parameter.empty for key in positional_or_keyword_order)
-        ordered_params = {key : params[key] for key in positional_or_keyword_order}
+        ordered_params = {key : params[key] for key in positional_or_keyword_order if key in params}
         ordered_params.update(params)
 
         params = ordered_params
@@ -109,6 +109,7 @@ def doc_decorator(
     return_annotation=inspect.Signature.empty,
     return_name = None,
     exclude=[],
+    #exclude_ignore_key_error = True,
     positional_or_keyword_order : List[str] = None
     ):
     signature = combine_signatures(
@@ -120,8 +121,13 @@ def doc_decorator(
     def decorator(func : Callable) -> Callable:
         def wrapped(*args, **kwargs):
             nonlocal signature
-            if any([kw not in signature.parameters for kw in kwargs]):
-                raise KeyError("unexpected keyword argument")
+            #if any([kw not in signature.parameters for kw in kwargs]):
+            #    raise KeyError("unexpected keyword argument")
+            for kw in kwargs:
+                if kw not in signature.parameters:
+                    raise TypeError(f"'{kw}' unexpected keyword argument")
+                if kw in exclude:
+                    raise TypeError(f"'{kw}' keyword argument has been excluded")
             args_to_kwargs = {param : arg for param, arg in zip(signature.parameters, args)}
             return func(**args_to_kwargs, **kwargs) 
         wrapped.__signature__ = signature

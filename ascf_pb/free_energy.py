@@ -14,13 +14,12 @@ required_keys = [
 
 def osmotic_free_energy(z0 : float, z1 : float, volume_integrand : Callable, Pi_z : Callable) -> float:
     if not isinstance(volume_integrand, Callable):
-        def integrand(z_):
+        def integrand(z_ : float) -> float:
             return Pi_z(z0)*volume_integrand
     # if A_cb provided as a callable
     else:
-        def integrand(z_):
+        def integrand(z_ : float) -> float:
             return Pi_z(z0)*volume_integrand(z_-z0)
-
     fe = integrate.quad(integrand, z0, z1)[0]
     return fe
 
@@ -38,12 +37,14 @@ def gamma_phi(phi : float, chi : float, chi_PC : float, expansion_coefs : list) 
 
 def surface_free_energy(
         z0 : float, z1 : float, 
-        surface_integrand : Callable, 
+        surface_integrand : Callable,
+        A0 : float,
+        A1 : float,
         phi_z : Callable, 
         chi : float, 
         chi_PC : float, 
-        expansion_coefs : list
-    ):
+        expansion_coefs : tuple
+    ) -> float:
     gamma = partial(gamma_phi, 
         chi = chi, 
         chi_PC = chi_PC, 
@@ -51,7 +52,20 @@ def surface_free_energy(
     )
     def integrand(z_):
         return surface_integrand(z_-z0)*gamma(phi_z(z_))
-    fe = integrate.quad(integrand, z0, z1)[0]
+    fe = integrate.quad(integrand, z0, z1)[0] + A0*gamma(phi_z(z0)) + A1*gamma(phi_z(z1))
+    return fe
+
+def surface_free_energy_apprx(
+    z: float,
+    surface : float,
+    phi_z : Callable,
+    chi : float,
+    chi_PC : float,
+    expansion_coefs : tuple
+)->float:
+    phi = phi_z(z)
+    gamma = gamma_phi(phi, chi, chi_PC, expansion_coefs)
+    fe = surface*gamma
     return fe
 
 def total_free_energy_apprx(
@@ -62,8 +76,8 @@ def total_free_energy_apprx(
     Pi_cb : Callable,
     chi : float,
     chi_PC : float,
-    expansion_coefs : list
-):
+    expansion_coefs : tuple
+) -> float:
     phi = phi_z(z)
     Pi = Pi_cb(z)
     gamma = gamma_phi(phi, chi, chi_PC, expansion_coefs)
@@ -79,8 +93,8 @@ def total_free_energy(
     Pi_cb : Callable,
     chi : float, 
     chi_PC : float,
-    expansion_coefs : list
-):
+    expansion_coefs : tuple
+) -> float:
     osm = osmotic_free_energy(
         z0, z1, 
         volume_integrand, 

@@ -12,7 +12,7 @@ miklakt@gmail.com
 from functools import lru_cache
 
 from ascf_pb.solver import Phi
-import common
+from . import common
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np

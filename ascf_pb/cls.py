@@ -1,17 +1,20 @@
 #%%
 import importlib
-from typing import Callable
+from typing import Callable, List, Union
 import ascf_pb.topology
 from ascf_pb import solver
 import inspect
 import numpy as np
 import itertools
 import functools
+from scipy import integrate
+from scipy.interpolate import interp1d
 
 from ascf_pb.decorators import doc_decorator, ignore_extra_kwargs
 import ascf_pb.decorators
 
-brush_solver_default_key_order = ["chi", "N", "sigma"]
+default_key_order = ["chi", "N", "sigma", "ph", "pw", "pc"]
+excluded_keys = ["kappa", "d", "phi_D", "phi", "z0", "z1", "phi_z", "Pi_z", "surface_integrand", "volume_integrand", "A0", "A1"]
 
 
 
@@ -45,9 +48,9 @@ class BrushSolver:
         @doc_decorator(
             #return_name="D",
             callables=[self.D_callback, self.kappa_callback],
-            exclude=["kappa"],
+            exclude=excluded_keys,
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order
+            positional_or_keyword_order=default_key_order
         )
         def D(**kwargs):
             kappa = ignore_extra_kwargs(self.kappa_callback)(**kwargs)
@@ -61,9 +64,9 @@ class BrushSolver:
         # called in the body of phi function
         @doc_decorator(
             callables=[self.D_callback, self.kappa_callback],
-            exclude=["kappa"],
+            exclude=excluded_keys,
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order
+            positional_or_keyword_order=default_key_order
         )
         def phi_D(**kwargs):
             kappa = ignore_extra_kwargs(self.kappa_callback)(**kwargs)
@@ -75,9 +78,9 @@ class BrushSolver:
     def _phi(self) -> Callable:
         @doc_decorator(
             callables=[self.D, self.kappa_callback, self.phi_D, solver.Phi],
-            exclude=["kappa", "d", "phi_D"],
+            exclude=excluded_keys,
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order
+            positional_or_keyword_order=default_key_order
         )
         def phi(**kwargs):
             # geometry and topology dependent calls
@@ -94,9 +97,9 @@ class BrushSolver:
     def _Pi(self) -> Callable:
         @doc_decorator(
             callables=[self.D_callback, self.kappa_callback, self.phi_D_callback, solver.Phi, solver.Pi],
-            exclude=["kappa", "d", "phi_D", "phi"],
+            exclude=excluded_keys,
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order
+            positional_or_keyword_order=default_key_order
         )
         def Pi(**kwargs):
             # geometry and topology dependent calls
@@ -110,6 +113,45 @@ class BrushSolver:
         return Pi
     
 
+class ExternalDefinedBrush:
+    def __init__(self, phi : Union[Callable,List], z : List = None, **kwargs) -> None:
+        if isinstance(phi, Callable):
+            self.phi = phi
+        else:
+            from scipy.interpolate import interp1d
+            if z is None:
+                z = np.arange(0, len(phi))
+            self.phi = self.build_phi(phi, z)
+        
+        self.Pi = self._Pi()
+
+    def build_phi(self, phi_ : List, z_: List) -> Callable:
+        interp = interp1d(z_, phi_)
+        def phi(z : float) -> float:
+            try:
+                phi_ =  float(interp(z))
+            except ValueError:
+                phi_= 0.0
+            return phi_
+        signature = inspect.signature(phi)
+        phi.__signature__ = signature
+        doc = ascf_pb.decorators.generate_docstring(signature, return_name="phi")
+        phi.__doc__ = doc
+        return phi
+
+    def _Pi(self):
+        def Pi(chi: float, z: float) -> float:
+            # geometry and topology dependent calls
+            phi = self.phi(z)
+            Pi_ = solver.Pi(phi, chi)
+            return Pi_
+        signature = inspect.signature(Pi)
+        Pi.__signature__ = signature
+        doc = ascf_pb.decorators.generate_docstring(signature, return_name="Pi")
+        Pi.__doc__ = doc
+        return Pi
+
+
 class Particle:
     def __init__(self, particle = "cylinder") -> None:
         self.__particle_module = importlib.import_module(
@@ -122,9 +164,12 @@ class Particle:
 
 
 class BrushInsertionFreeEnergy:
-    def __init__(self, geometry: str = 'plain', vectorize=True, v_product=True, particle = "cylinder") -> None:
+    def __init__(self, geometry: str = 'plain', vectorize : bool=True, v_product : bool =True, particle : str = "cylinder", external_phi = None) -> None:
         self.Particle = Particle(particle)
-        self.Brush = BrushSolver(geometry, vectorize=False)
+        if external_phi is not None:
+            self.Brush = ExternalDefinedBrush(external_phi)
+        else:
+            self.Brush = BrushSolver(geometry, vectorize=False)
         
         if vectorize:
             self.__deco = ascf_pb.decorators.vectorize(v_product)
@@ -138,16 +183,19 @@ class BrushInsertionFreeEnergy:
 
         self.build_functions()
         
-    
     def build_functions(self):
-        self.phi_D = self.__deco(self.Brush._phi_D())
-        self._D = self.__deco(self.Brush._D())
-        self.phi = self.__deco(self.Brush._phi())
-        self.Pi = self.__deco(self.Brush._Pi())
+        try:
+            self.phi_D = self.__deco(self.Brush._phi_D())
+            self.D = self.__deco(self.Brush._D())
+        except:
+            print("phi_D, D Not implemented for external data")
+        
+        self.phi = self.__deco(self.Brush.phi)
+        self.Pi = self.__deco(self.Brush.Pi)
 
         self.osmotic_free_energy = self.__deco(self._osmotic_free_energy())
-        #self.surface_free_energy = self.__deco(self._surface_free_energy())
-    
+        self.surface_free_energy = self.__deco(self._surface_free_energy())
+        self.total_free_energy = self.__deco(self._total_free_energy())
     
     def _osmotic_free_energy(self):
         @doc_decorator(
@@ -155,11 +203,11 @@ class BrushInsertionFreeEnergy:
                 self.Particle.integration_interval,
                 self.Particle.volume_integrand,
                 self.Brush.Pi,
-                self.osmotic_free_energy_callback
+                #self.osmotic_free_energy_callback
                 ],
-            exclude=["kappa", "d", "phi_D", "phi", "z0", "z1", "z"],
+            exclude=excluded_keys+["z"],
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order+["ph", "pw", "pc"]
+            positional_or_keyword_order=default_key_order
         )
         def osmotic_free_energy(**kwargs):
             z0, z1 = ignore_extra_kwargs(self.Particle.integration_interval)(**kwargs)
@@ -183,13 +231,13 @@ class BrushInsertionFreeEnergy:
                 self.Brush.phi,
                 self.surface_free_energy_callback
                 ],
-            exclude=["kappa", "d", "phi_D", "phi", "z0", "z1", "z"],
+            exclude=excluded_keys+["z"],
             return_annotation=float,
-            positional_or_keyword_order=brush_solver_default_key_order+["ph", "pw", "pc"]
+            positional_or_keyword_order=default_key_order
         )
         def surface_free_energy(**kwargs):
             kwargs["z0"], kwargs["z1"] = ignore_extra_kwargs(self.Particle.integration_interval)(**kwargs)
-            kwargs["surface_integrand"] = ignore_extra_kwargs(self.Particle.surface_integrand)(**kwargs)
+            kwargs["surface_integrand"], kwargs["A0"], kwargs["A1"] = ignore_extra_kwargs(self.Particle.surface_integrand)(**kwargs)
             kwargs["phi_z"] = ascf_pb.decorators.make_partial(**kwargs, ignore_keyerror =True)(self.Brush.phi)
             
             fe = ignore_extra_kwargs(self.surface_free_energy_callback)(**kwargs)
@@ -197,13 +245,32 @@ class BrushInsertionFreeEnergy:
 
         return surface_free_energy
 
+    def _total_free_energy(self):
+        @doc_decorator(
+            callables=[
+                self.surface_free_energy,
+                self.osmotic_free_energy
+                ],
+            exclude=excluded_keys + ["z"],
+            return_annotation=float,
+            positional_or_keyword_order=default_key_order
+        )
+        def total_free_energy(**kwargs):
+            osm = ignore_extra_kwargs(self.osmotic_free_energy)(**kwargs)
+            sur = ignore_extra_kwargs(self.surface_free_energy)(**kwargs)
+            return sur+osm
+        return total_free_energy
+
 #%%
 if __name__ == "__main__":
-    b = BrushInsertionFreeEnergy(vectorize=False)
+    b = BrushInsertionFreeEnergy()
+    D = b.D(N=1000, sigma = 0.02, chi=0)
+    z = np.arange(0, D+1)
+    phi_external = b.phi(N=1000, sigma = 0.02, chi=0, z=z)
 # %%
-    b.osmotic_free_energy(chi = 0, N=1000, sigma = 0.02, ph =4, pw =4, pc = 12)
+    b = BrushInsertionFreeEnergy(external_phi=phi_external)
 # %%
-    b.surface_free_energy(chi = 0, N=1000, sigma = 0.02, ph =4, pw =4, pc = 12)
+    b.total_free_energy(chi = 0, ph=4, pw =4, pc = 10, chi_PC = -1, expansion_coefs = (0.19, -0.08))
 # %%
-    b.surface_free_energy
+    help(b.total_free_energy)
 # %%
