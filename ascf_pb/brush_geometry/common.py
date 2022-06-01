@@ -1,6 +1,8 @@
 from scipy.optimize import brentq
 from ascf_pb.solver import Pi
 from ascf_pb.solver import SolverError
+import logging
+logger = logging.getLogger(__name__)
 
 def normalization_find_root(normalization, a, b, max_tries=20) -> float:
     tries = 0
@@ -11,8 +13,8 @@ def normalization_find_root(normalization, a, b, max_tries=20) -> float:
             break
         except SolverError as e:
             b = b-d
-            print(f"brentq failed while normalization, changing bracketing interval")
-            print(f"a:{a}, b:{b}")
+            logger.debug(f"brentq failed while normalization, changing bracketing interval")
+            logger.debug(f"a:{a}, b:{b}")
             tries = tries + 1
     else:
         raise ValueError("Can't finnish normalization in several tries")

@@ -62,6 +62,8 @@ from . import common
 from scipy.optimize import brentq
 from scipy import integrate
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
 
 #when phi_D is defined by vanishing osmotic pressure
 phi_D_unrestricted = common.phi_D_unrestricted
@@ -142,7 +144,7 @@ def phi_D_restricted(
 
 
 ################################################################################
-# polymer density at the end of a brush, if we don't know if it is restricted
+# polymer density at the end of a brush, for both restricted and unrestricted
 #@lru_cache()
 def phi_D_universal(
         chi : float, 
@@ -157,15 +159,15 @@ def phi_D_universal(
         return phi_D
     # else, it might be restricted
     try:
-        print('Restriction notified.')
+        logging.debug('Restriction notified.')
         D = D_unrestricted(chi, kappa, N, sigma)
         if R>=D or R<=0:
             #brush is not restricted
-            print('Not restricted, D<=R.')
+            logging.debug('Not restricted, D<=R.')
             phi_D = phi_D_unrestricted(chi)
         else:
             #brush is restricted
-            print('Restricted, D>=R.')
+            logging.debug('Restricted, D>=R.')
             phi_D = phi_D_restricted(chi, kappa, N, sigma, R)
     except:
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R)

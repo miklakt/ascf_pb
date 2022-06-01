@@ -87,15 +87,15 @@ def phi_D_universal(
         D = D_unrestricted(chi, kappa, N, sigma, pore_Radius)
         if R>=D:
             #brush is not restricted
-            print("Unrestricted")
+            logging.debug("Unrestricted")
             phi_D = phi_D_unrestricted(chi)
         else:
             #brush is restricted
-            print("Restricted")
+            logging.debug("Restricted")
             phi_D = phi_D_restricted(chi, kappa, N, sigma, R, pore_Radius)
     except:
         #brush is restricted
-        print("Restricted")
+        logging.debug("Restricted")
         phi_D = phi_D_restricted(chi, kappa, N, sigma, R, pore_Radius)
     return phi_D
 
