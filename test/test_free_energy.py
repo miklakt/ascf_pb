@@ -141,3 +141,5 @@ plt.text(  # position text relative to Axes
 plt.show()
 
 # %%
+%matplotlib
+# %%
