@@ -9,13 +9,15 @@ import itertools
 import functools
 from scipy import integrate
 from scipy.interpolate import interp1d
+from scipy import optimize
 
 from ascf_pb.decorators import doc_decorator, ignore_extra_kwargs
 import ascf_pb.decorators
 
+#make positional arguments consistent
 default_key_order = ["chi", "N", "sigma", "ph", "pw", "pc"]
+#exclude intermediate calls arguments from signatures
 excluded_keys = ["kappa", "d", "phi_D", "phi", "z0", "z1", "phi_z", "Pi_z", "surface_integrand", "volume_integrand", "A0", "A1"]
-
 
 
 class BrushSolver:
@@ -122,8 +124,10 @@ class ExternalDefinedBrush:
             if z is None:
                 z = np.arange(0, len(phi))
             self.phi = self.build_phi(phi, z)
+            self.z = z
         
         self.Pi = self._Pi()
+        self.D = self._D()
 
     def build_phi(self, phi_ : List, z_: List) -> Callable:
         interp = interp1d(z_, phi_)
@@ -151,6 +155,20 @@ class ExternalDefinedBrush:
         Pi.__doc__ = doc
         return Pi
 
+    def _D(self):
+        def D(percentile : float = 0.98, N : float = None, sigma : float = None) -> float:
+            cumulative_phi = lambda z: integrate.quad(self.phi, 0, z)[0]
+            if (N is not None) and (sigma is not None):
+                theta = N*sigma
+            else:
+                if hasattr(self, "z"):
+                    theta = cumulative_phi(max(self.z))
+                else:
+                    raise ValueError("Can not calculate theta")
+            
+            D_ = optimize.root(lambda z: cumulative_phi(z) - theta*percentile, 0).x
+            return D_
+        return D
 
 class Particle:
     def __init__(self, particle = "cylinder") -> None:
@@ -186,10 +204,15 @@ class BrushInsertionFreeEnergy:
     def build_functions(self):
         try:
             self.phi_D = self.__deco(self.Brush._phi_D())
+        except:
+            print("phi_D Not implemented for external data")
+
+        try:
             self.D = self.__deco(self.Brush._D())
         except:
-            print("phi_D, D Not implemented for external data")
+            print("D Not implemented for external data")
         
+        self.D = self.__deco(self.Brush._D())
         self.phi = self.__deco(self.Brush.phi)
         self.Pi = self.__deco(self.Brush.Pi)
 
@@ -273,4 +296,6 @@ if __name__ == "__main__":
     b.total_free_energy(chi = 0, ph=4, pw =4, pc = 10, chi_PC = -1, expansion_coefs = (0.19, -0.08))
 # %%
     help(b.total_free_energy)
+# %%
+    b.D(percentile = 0.98, N =1000, sigma =0.02)
 # %%

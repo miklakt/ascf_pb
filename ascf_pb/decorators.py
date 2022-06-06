@@ -20,7 +20,8 @@ __arg_description = dict(
     expansion_coefs="polynomial coefficients of gamma - phi dependency",
     eta="topological parameter",
     g="dendron generations",
-    q="dendron functionality"
+    q="dendron functionality",
+    percentile = "percentile to calculate D for smoothed phi profile"
 )
 
 #for documentation generation
