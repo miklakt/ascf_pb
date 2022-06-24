@@ -28,10 +28,9 @@ sigma = Gamma*a**2*NA*1e-3
 D_experimental = D_experimental_nm/a
 D_err = D_err_nm/a
 D_min = N*sigma
-
-D_min_nm = D_min*a
 #%%
 brush = ascf_pb.BrushSolver()
+
 #calculate chi on brush thickness
 def find_chi_on_D(D, D_error, **kwargs):
     f = [
@@ -45,12 +44,11 @@ def find_chi_on_D(D, D_error, **kwargs):
 
 chi = np.linspace(0, 1, 100)
 D_on_chi = brush.D(N=N, sigma = sigma, chi = chi)
-D_on_chi_nm = D_on_chi*a
 phi_av_on_chi = N*sigma/D_on_chi
 
 #numerical derivative
-d_chi = np.gradient(chi, D_on_chi)
-chi_err = d_chi*D_err*a
+d_chi = np.gradient(chi, D_on_chi)*a
+chi_err = d_chi*D_err
 
 chi_expected, chi_down, chi_up = find_chi_on_D(D_experimental, D_err, N=N, sigma=sigma)
 phi_av = N*sigma/(D_experimental)
@@ -68,15 +66,15 @@ annotation_text = f"D = {D_experimental_nm:.2f} $\pm$ {D_err_nm:.2f} nm" +\
 # %%
 %matplotlib ipympl
 fig, ax = plt.subplots()
-ax.plot(D_on_chi_nm, chi)
-ax.plot(D_on_chi_nm, chi-chi_err, linestyle = ":", color = LAST_USED_COLOR())
-ax.plot(D_on_chi_nm, chi+chi_err, linestyle = ":", color = LAST_USED_COLOR())
+ax.plot(D_on_chi*a, chi)
+ax.plot(D_on_chi*a, chi-chi_err, linestyle = ":", color = LAST_USED_COLOR())
+ax.plot(D_on_chi*a, chi+chi_err, linestyle = ":", color = LAST_USED_COLOR())
 
 ax.set_ylabel("$\chi$")
 ax.set_xlabel("D, [nm]")
 ax.set_xlim(0,max(D_on_chi))
 
-ax.axvline(x = D_min_nm, linestyle = ":", color = "black")
+ax.axvline(x = D_min*a, linestyle = ":", color = "black")
 ax.axhline(y = chi_expected, color = "red", linewidth = 0.2)
 ax.scatter(x = D_experimental_nm, y=chi_expected, marker = "o", color = "red")
 ax.vlines(x = D_experimental_nm, color = "red", ymin = chi_down, ymax = chi_up)
