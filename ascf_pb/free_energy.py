@@ -2,14 +2,14 @@
 Routines to calculate insertion free energy of a probe particle
 """
 import scipy.integrate as integrate
-from typing import Callable
+from typing import Callable, Union
 import numpy as np
 from functools import partial
 
-required_keys = [
-    "chi_PC",
-    "expansion_coefs"
-]
+#required_keys = [
+#    "chi_PC",
+#    "expansion_coefs",
+#]
 
 
 def osmotic_free_energy(z0 : float, z1 : float, volume_integrand : Callable, Pi_z : Callable) -> float:
@@ -43,7 +43,8 @@ def surface_free_energy(
         phi_z : Callable, 
         chi : float, 
         chi_PC : float, 
-        expansion_coefs : tuple
+        expansion_coefs : tuple,
+        roughness : float = 1
     ) -> float:
     gamma = partial(gamma_phi, 
         chi = chi, 
@@ -54,6 +55,7 @@ def surface_free_energy(
         return surface_integrand(z_-z0)*gamma(phi_z(z_))
     fe = integrate.quad(integrand, z0, z1)[0] + A0*gamma(phi_z(z0)) + A1*gamma(phi_z(z1))
     return fe
+
 
 def surface_free_energy_apprx(
     z: float,
@@ -67,6 +69,7 @@ def surface_free_energy_apprx(
     gamma = gamma_phi(phi, chi, chi_PC, expansion_coefs)
     fe = surface*gamma
     return fe
+
 
 def total_free_energy_apprx(
     z: float,
@@ -83,6 +86,7 @@ def total_free_energy_apprx(
     gamma = gamma_phi(phi, chi, chi_PC, expansion_coefs)
     fe = volume*Pi + surface*gamma
     return fe
+
 
 def total_free_energy(
     z0 : float, 
@@ -110,3 +114,33 @@ def total_free_energy(
     )
 
     return osm+surf
+
+
+def PC(
+    free_energy_integrand : Union[Callable,list,np.ndarray],
+    a : Union[float, int],
+    b : Union[float, int],
+)->float:
+    if isinstance(free_energy_integrand, (list, np.ndarray)):
+        I = integrate.simps(np.exp(-free_energy_integrand[a:b]))
+    else:
+        dx = 0.2
+        x = np.arange(a, b+dx, dx)
+        y = np.exp(-free_energy_integrand(x))
+        I = integrate.simps(y, x)
+    return I/(b-a)
+
+
+def D_eff(
+    free_energy_integrand : Union[Callable,list,np.ndarray],
+    a : Union[float, int],
+    b : Union[float, int],
+)->float:
+    if isinstance(free_energy_integrand, (list, np.ndarray)):
+        I = integrate.simps(np.exp(free_energy_integrand[a:b]))
+    else:
+        dx = 0.2
+        x = np.arange(a, b+dx, dx)
+        y = np.exp(free_energy_integrand(x))
+        I = integrate.simps(y, x)
+    return (b-a)/I
