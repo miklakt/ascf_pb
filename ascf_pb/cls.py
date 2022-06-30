@@ -15,7 +15,7 @@ from ascf_pb.decorators import doc_decorator, ignore_extra_kwargs
 import ascf_pb.decorators
 
 #make positional arguments consistent
-default_key_order = ["chi", "N", "sigma", "ph", "pw", "pc"]
+default_key_order = ["chi", "N", "sigma", "ph", "pw", "pc", "a", "b"]
 #exclude intermediate calls arguments from signatures
 excluded_keys = ["kappa", "d", "phi_D", "phi", "z0", "z1", "phi_z", "Pi_z", "surface_integrand", "volume_integrand", "A0", "A1"]
 
@@ -198,6 +198,7 @@ class BrushInsertionFreeEnergy:
 
         self.osmotic_free_energy_callback = functools.lru_cache()(self.__free_energy_module.osmotic_free_energy)
         self.surface_free_energy_callback = functools.lru_cache()(self.__free_energy_module.surface_free_energy)
+        self.PC_callback = functools.lru_cache()(self.__free_energy_module.PC)
 
         self.build_functions()
         
@@ -219,6 +220,7 @@ class BrushInsertionFreeEnergy:
         self.osmotic_free_energy = self.__deco(self._osmotic_free_energy())
         self.surface_free_energy = self.__deco(self._surface_free_energy())
         self.total_free_energy = self.__deco(self._total_free_energy())
+        self.PC = self.__deco(self._PC())
     
     def _osmotic_free_energy(self):
         @doc_decorator(
@@ -284,18 +286,35 @@ class BrushInsertionFreeEnergy:
             return sur+osm
         return total_free_energy
 
+    def _PC(self):
+        @doc_decorator(
+            callables=[
+                self.total_free_energy,
+                self.PC_callback
+                ],
+            exclude=excluded_keys + ["z", "pc"],
+            return_annotation=float,
+            positional_or_keyword_order=default_key_order
+        )
+        def PC(**kwargs):
+            def fe(x):
+                return ignore_extra_kwargs(self.total_free_energy)(pc = x, **kwargs)
+            a = kwargs["a"]
+            b = kwargs["b"] 
+            return self.PC_callback(fe, a, b)
+        return PC
 #%%
 if __name__ == "__main__":
     b = BrushInsertionFreeEnergy()
     D = b.D(N=1000, sigma = 0.02, chi=0)
     z = np.arange(0, D+1)
+    b.total_free_energy(N=1000, sigma = 0.02, chi = 0, ph=4, pw =4, pc = 10, chi_PC = -1, expansion_coefs = (0.19, -0.08))
+    
     phi_external = b.phi(N=1000, sigma = 0.02, chi=0, z=z)
+    b_ext = BrushInsertionFreeEnergy(external_phi=phi_external)
+    D_ext = b_ext.D(percentile = 0.98)
 # %%
-    b = BrushInsertionFreeEnergy(external_phi=phi_external)
+    b.PC(a = 4, b = D+4, N=1000, sigma = 0.02, chi = 0, ph=4, pw =4, chi_PC = -2, expansion_coefs = (0.19, -0.08))
 # %%
-    b.total_free_energy(chi = 0, ph=4, pw =4, pc = 10, chi_PC = -1, expansion_coefs = (0.19, -0.08))
-# %%
-    help(b.total_free_energy)
-# %%
-    b.D(percentile = 0.98, N =1000, sigma =0.02)
+    b_ext.PC(a = 0, b = D, chi = 0, ph=4, pw =4, chi_PC = -1, expansion_coefs = (0.19, -0.08))
 # %%

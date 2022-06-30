@@ -21,7 +21,10 @@ __arg_description = dict(
     eta="topological parameter",
     g="dendron generations",
     q="dendron functionality",
-    percentile = "percentile to calculate D for smoothed phi profile"
+    percentile = "percentile to calculate D for smoothed phi profile",
+    a = "left boundary of integration",
+    b = "right boundary of integration",
+    roughness = "particle roughness (surface/projection)"
 )
 
 #for documentation generation
@@ -33,7 +36,9 @@ __return_description = dict(
     phi='local polymer volume fraction',
     phi_D='local polymer volume fraction at the brush\'s end',
     Pi='local osmotic pressure',
-    critical_pore_radius='minimal radius of an open pore'
+    critical_pore_radius='minimal radius of an open pore',
+    PC='partition coefficient',
+    D_eff = 'normalized diffusion coefficient'
 )
 
 
@@ -84,8 +89,11 @@ def generate_docstring(signature: inspect.Signature, return_name):
     args_desc = []
     for k, v in signature.parameters.items():
         if v.default is inspect.Parameter.empty:
-            args_desc.append(
-                f'{k} ({v.annotation.__name__}) : {__arg_description[k]}')
+            try:
+                args_desc.append(
+                    f'{k} ({v.annotation.__name__}) : {__arg_description[k]}')
+            except:
+                print(f"Docstring for {k} is not generated")
         else:
             args_desc.append(
                 f'{k} ({v.annotation.__name__}, optional) : {__arg_description[k]}. Defaults to {v.default}')
